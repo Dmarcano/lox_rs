@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result, Context};
 use crate::lexer::{Lexer, Token};
+use anyhow::{anyhow, Context, Result};
 
 /// the interpreter is responsible for running lox programs either form a file or a REPL
 pub struct Interpreter;
@@ -9,31 +9,33 @@ pub enum InterpreterMode {
     Repl,
 }
 
-
-impl Interpreter { 
+impl Interpreter {
     pub fn new() -> Self {
         Interpreter
     }
 
     pub fn run(&self, mode: InterpreterMode) -> Result<()> {
         match mode {
-            InterpreterMode::Script(path) => {self.run_script(path) }
-            InterpreterMode::Repl => { self.run_repl()}
+            InterpreterMode::Script(path) => self.run_script(path),
+            InterpreterMode::Repl => self.run_repl(),
         }
     }
 
     pub fn run_script(&self, path: String) -> Result<()> {
-        let source  = std::fs::read_to_string(&path)
-        .with_context(|| format!("Failed to read in file from {}", path))?;
+        let source = std::fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read in file from {}", path))?;
+        self.run_on_string(source)
+    }
 
-        let lexer = Lexer::new();
-        let _tokens = lexer.lex(&source)?;
+    fn run_on_string(&self, source: String) -> Result<()> {
+        let mut lexer = Lexer::new();
+        let tokens = lexer.lex(&source)?;
 
         Ok(())
     }
 
     pub fn run_repl(&self) -> Result<()> {
-        loop { 
+        loop {
             let mut buf = String::new();
             print!(">> ");
             let input = std::io::stdin().read_line(&mut buf)?;
@@ -46,12 +48,14 @@ impl Interpreter {
         Ok(())
     }
 
-
-    pub fn error(line : u32, message : String, ) -> anyhow::Error {
+    pub fn error(line: u32, message: String) -> String {
         Interpreter::report(line, "".into(), message)
     }
 
-    pub fn report(line : u32, err_where : String, message : String) -> anyhow::Error {
-        anyhow!("[line {}] Error {}: {}", line, err_where, message)
+    pub fn report(line: u32, err_where: String, message: String) -> String {
+        format!("[line {}] Error {}: {}", line, err_where, message)
     }
 }
+
+#[cfg(test)]
+mod test {}

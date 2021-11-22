@@ -117,18 +117,18 @@ impl Lexer {
 
         let tokens = self.lex_chars(line.chars(), line_number)?;
         Ok(tokens)
-            // Ok(tokens.into_iter().flatten().collect())
+        // Ok(tokens.into_iter().flatten().collect())
     }
 
     // TODOOOO: Handle comments
     /// Handles lexing/scanning on a character by character basis. This way multi-character tokens can be either split into multiple smaller tokens or into a larger identifier token.
-    /// 
+    ///
     /// ### Note
     /// The lexer
     fn lex_chars(&self, word: Chars, line_number: u32) -> Result<Vec<Token>> {
         /*
         Use a Peekable iterator to allow us to peek at the next character in the input without consuming the iterator at the current character
-        This is useful for determining whether or not a token is a multi-character token or a comment. 
+        This is useful for determining whether or not a token is a multi-character token or a comment.
         This is what is called single-character lookahead and is used by many parsing algorithms.
         */
         let mut peek: Peekable<_> = word.peekable();
@@ -158,11 +158,11 @@ impl Lexer {
                                 break;
                             }
                         }
-                        continue
+                        continue;
                     } else {
                         Ok(Token::new(TokenType::Slash, lexeme, line_number))
                     }
-                },
+                }
                 "!" => {
                     if next_peek == Some(&'=') {
                         peek.next();
@@ -194,13 +194,19 @@ impl Lexer {
                     } else {
                         Ok(Token::new(TokenType::Less, lexeme, line_number))
                     }
-                },
+                }
                 " " | "\r" | "\t" => {
                     // ignore whitespace characters
                     continue;
-                },
-                "\"" => Lexer::lex_string_literals(lexeme, &mut peek, line_number),                
-                _ => Err(anyhow!(Lexer::lexical_error(format!("unexpected character! {}", lexeme), line_number))),
+                }
+                "\"" => Lexer::lex_string_literals(lexeme, &mut peek, line_number),
+                num if num.chars().next().unwrap().is_numeric() => {
+                    Lexer::lex_number_literals(lexeme, &mut peek, line_number)
+                }
+                _ => Err(anyhow!(Lexer::lexical_error(
+                    format!("unexpected character! {}", lexeme),
+                    line_number
+                ))),
             }?;
             tokens.push(out);
         }
@@ -208,15 +214,61 @@ impl Lexer {
     }
 
     /// keep consuming the set of characters inside of peek until another " character is found or the end of the string is reached which results in an error.
-    fn lex_string_literals(lexeme : String, peek : &mut Peekable<Chars>, line_number: u32) -> Result<Token> {
-        unimplemented!()
+    fn lex_string_literals(
+        lexeme: String,
+        peek: &mut Peekable<Chars>,
+        line_number: u32,
+    ) -> Result<Token> {
+        let mut val = String::with_capacity(10);
+
+        while let Some(char) = peek.peek() {
+            val.push(char.clone());
+            if char == &'\"' {
+                return Ok(Token::new(TokenType::String(val), lexeme, line_number));
+            }
+            peek.next();
+        }
+        Err(anyhow!(Lexer::lexical_error(
+            format!("Unterminated string literal {}", val),
+            line_number
+        )))
     }
 
-    fn lex_number_literals() -> Result<Token> {
-        unimplemented!()
-    }  
+    fn lex_number_literals(
+        lexeme: String,
+        peek: &mut Peekable<Chars>,
+        line_number: u32,
+    ) -> Result<Token> {
+        let mut val = String::with_capacity(10);
+        val.push_str(&lexeme);
 
-    
+        while let Some(char) = peek.next() {
+            if (!char.is_numeric()) && (char != '.') {
+                return Ok(Token::new(
+                    TokenType::Number(val.parse::<f32>().unwrap()),
+                    val,
+                    line_number,
+                ));
+            }
+            val.push(char);
+        }
+        match val.parse::<f32>() {
+            Ok(num) => Ok(Token::new(TokenType::Number(num), val, line_number)),
+            Err(_) => Err(anyhow!(Lexer::lexical_error(
+                format!("Invalid number literal {}", val),
+                line_number
+            ))),
+        }
+        // Err(anyhow!(Lexer::lexical_error(format!("Malformed number literal {}", val) ,line_number)
+    }
+
+    fn lex_identifier_literals(
+        lexeme: String,
+        peek: &mut Peekable<Chars>,
+        line_number: u32,
+    ) -> Result<Token> {
+        todo!()
+    }
 
     fn lexical_error(message: String, line_number: u32) -> String {
         format!("{:#?} (line {})", message, line_number)
@@ -244,13 +296,12 @@ mod test {
             Token::new(TokenType::RightBrace, "}".to_string(), 1),
             Token::new(TokenType::Plus, "+".to_string(), 2),
             Token::new(TokenType::Minus, "-".to_string(), 2),
-            Token::new(TokenType::Bang, "!".to_string(), 2)
-            ];
-        
+            Token::new(TokenType::Bang, "!".to_string(), 2),
+        ];
+
         tokens.iter().zip(expected.iter()).for_each(|(t, e)| {
             assert_eq!(t, e);
         });
-
     }
 
     #[test]
@@ -262,13 +313,17 @@ mod test {
         let expected = vec![
             Token::new(TokenType::Identifier, "a".to_string(), 1),
             Token::new(TokenType::Plus, "+".to_string(), 1),
-            Token::new(TokenType::Identifier, "b".to_string(), 1)];
+            Token::new(TokenType::Identifier, "b".to_string(), 1),
+        ];
 
-        tokens.iter().zip(expected.iter()).for_each(|(token, expected_token)| {
-            assert_eq!(token, expected_token);
-        });
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
 
-        let source_code = "a==b"; 
+        let source_code = "a==b";
         let tokens = lexer.lex(source_code).unwrap();
 
         let source_code = "a!=b";
@@ -283,7 +338,51 @@ mod test {
     }
 
     #[test]
-    fn comment_test() {
+    fn lexer_number_literal_test() {
+        let number_literals = "123.456\n123";
+        let mut lexer = Lexer::new();
+        let tokens = lexer.lex(number_literals).unwrap();
+        let expected = vec![
+            Token::new(TokenType::Number(123.456), "123.456".to_string(), 1),
+            Token::new(TokenType::Number(123.0), "123".to_string(), 2),
+        ];
+
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
+    }
+
+    #[test]
+    fn lexer_string_literal_test() {
         todo!()
+    }
+
+    #[test]
+    fn comment_test() {
+        let comment = "// this is a comment";
+        let mut lexer = Lexer::new();
+        let tokens = lexer.lex(comment).unwrap();
+        assert_eq!(tokens.len(), 0);
+
+        let source_code = "// this is a comment\n a + b = 0";
+        let tokens = lexer.lex(source_code).unwrap();
+
+        let expected = vec![
+            Token::new(TokenType::Identifier, "a".to_string(), 2),
+            Token::new(TokenType::Plus, "+".to_string(), 2),
+            Token::new(TokenType::Identifier, "b".to_string(), 2),
+            Token::new(TokenType::Equal, "=".to_string(), 2),
+            Token::new(TokenType::Number(0.0), "0".to_string(), 2),
+        ];
+
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
     }
 }

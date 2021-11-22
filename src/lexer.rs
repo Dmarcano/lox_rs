@@ -117,21 +117,10 @@ impl Lexer {
         let out = input
             .lines()
             .enumerate()
-            .map(|(line_number, line)| self.lex_line(line, 1 + line_number as u32))
+            .map(|(line_number, line)| self.lex_chars(line.chars(), 1 + line_number as u32))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(out.into_iter().flatten().collect())
-    }
-
-    fn lex_line(&self, line: &str, line_number: u32) -> Result<Vec<Token>> {
-        // let tokens = line.split_whitespace()
-        //     .map(|word| word.chars())
-        //     .map(|chars| self.lex_chars(chars, line_number))
-        //     .collect::<Result<Vec<_>>>()?;
-
-        let tokens = self.lex_chars(line.chars(), line_number)?;
-        Ok(tokens)
-        // Ok(tokens.into_iter().flatten().collect())
     }
 
     // TODOOOO: Handle comments

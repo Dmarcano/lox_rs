@@ -84,28 +84,28 @@ pub enum TokenType {
 /// A token is a single lexical unit of an input to the Lox Interpreter.
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: String,
     // the line of the file that was parsed that this token was found on
     pub line: u32,
+    /// Used solely for debugging purposes to print the token literall to the console
+    lexeme: Option<String>,
+
 }
 
 impl Token {
     pub fn new(token_type: TokenType, lexeme: String, line: u32) -> Self {
+        let lexeme = Some(lexeme);
         Self {
             token_type,
             lexeme,
             line,
         }
     }
+    
 }
 
 /// A lexer (or scanner) is responsible for breaking a program into a sequence of tokens.
 pub struct Lexer {
-    line: u32,
-    // the start of the current lexeme being scanned
-    start: u32,
-    // the current character of the current lexeme being scanned
-    end: u32,
+    debug: bool,
 }
 
 /// the lexer is responsible for breaking an input program into a sequence of tokens. The program is represented
@@ -113,9 +113,7 @@ pub struct Lexer {
 impl Lexer {
     pub fn new() -> Self {
         Self {
-            line: 1,
-            start: 0,
-            end: 0,
+            debug : false
         }
     }
 
@@ -128,11 +126,6 @@ impl Lexer {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(out.into_iter().flatten().collect())
-    }
-
-    /// whether or not the lexer has reached the end of file
-    fn is_at_end(&self, input: &str) -> bool {
-        self.end >= input.len() as u32
     }
 
     fn lex_line(&self, line: &str, line_number: u32) -> Result<Vec<Token>> {

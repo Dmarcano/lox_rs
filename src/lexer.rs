@@ -139,18 +139,18 @@ impl Lexer {
             let lexeme = char.to_string();
             let next_peek = peek.peek();
 
-            let out = match &*lexeme {
-                "(" => Ok(Token::new(TokenType::LeftParen, lexeme, line_number)),
-                ")" => Ok(Token::new(TokenType::RightParen, lexeme, line_number)),
-                "{" => Ok(Token::new(TokenType::LeftBrace, lexeme, line_number)),
-                "}" => Ok(Token::new(TokenType::RightBrace, lexeme, line_number)),
-                "," => Ok(Token::new(TokenType::Comma, lexeme, line_number)),
-                "." => Ok(Token::new(TokenType::Dot, lexeme, line_number)),
-                "-" => Ok(Token::new(TokenType::Minus, lexeme, line_number)),
-                "+" => Ok(Token::new(TokenType::Plus, lexeme, line_number)),
-                ";" => Ok(Token::new(TokenType::Semicolon, lexeme, line_number)),
-                "*" => Ok(Token::new(TokenType::Star, lexeme, line_number)),
-                "/" => {
+            let out = match char {
+                '(' => Ok(Token::new(TokenType::LeftParen, lexeme, line_number)),
+                ')' => Ok(Token::new(TokenType::RightParen, lexeme, line_number)),
+                '{' => Ok(Token::new(TokenType::LeftBrace, lexeme, line_number)),
+                '}' => Ok(Token::new(TokenType::RightBrace, lexeme, line_number)),
+                ',' => Ok(Token::new(TokenType::Comma, lexeme, line_number)),
+                '.' => Ok(Token::new(TokenType::Dot, lexeme, line_number)),
+                '-' => Ok(Token::new(TokenType::Minus, lexeme, line_number)),
+                '+' => Ok(Token::new(TokenType::Plus, lexeme, line_number)),
+                ';' => Ok(Token::new(TokenType::Semicolon, lexeme, line_number)),
+                '*' => Ok(Token::new(TokenType::Star, lexeme, line_number)),
+                '/' => {
                     if next_peek == Some(&'/') {
                         // ignore comments
                         while let Some(char) = peek.next() {
@@ -163,7 +163,7 @@ impl Lexer {
                         Ok(Token::new(TokenType::Slash, lexeme, line_number))
                     }
                 }
-                "!" => {
+                '!' => {
                     if next_peek == Some(&'=') {
                         peek.next();
                         Ok(Token::new(TokenType::BangEqual, lexeme, line_number))
@@ -171,7 +171,7 @@ impl Lexer {
                         Ok(Token::new(TokenType::Bang, lexeme, line_number))
                     }
                 }
-                "=" => {
+                '=' => {
                     if next_peek == Some(&'=') {
                         peek.next();
                         Ok(Token::new(TokenType::EqualEqual, lexeme, line_number))
@@ -179,7 +179,7 @@ impl Lexer {
                         Ok(Token::new(TokenType::Equal, lexeme, line_number))
                     }
                 }
-                ">" => {
+                '>' => {
                     if next_peek == Some(&'=') {
                         peek.next();
                         Ok(Token::new(TokenType::GreaterEqual, lexeme, line_number))
@@ -187,7 +187,7 @@ impl Lexer {
                         Ok(Token::new(TokenType::Greater, lexeme, line_number))
                     }
                 }
-                "<" => {
+                '<' => {
                     if next_peek == Some(&'=') {
                         peek.next();
                         Ok(Token::new(TokenType::LessEqual, lexeme, line_number))
@@ -195,13 +195,16 @@ impl Lexer {
                         Ok(Token::new(TokenType::Less, lexeme, line_number))
                     }
                 }
-                " " | "\r" | "\t" => {
+                ' ' | '\r' | '\t' => {
                     // ignore whitespace characters
                     continue;
                 }
-                "\"" => Lexer::lex_string_literals(lexeme, &mut peek, line_number),
-                num if num.chars().next().unwrap().is_numeric() => {
+                '\'' => Lexer::lex_string_literals(lexeme, &mut peek, line_number),
+                num if num.is_numeric() => {
                     Lexer::lex_number_literals(lexeme, &mut peek, line_number)
+                }
+                chr if chr.is_alphabetic() => {
+                    Lexer::lex_identifier_literals(lexeme, &mut peek, line_number)
                 }
                 _ => Err(anyhow!(Lexer::lexical_error(
                     format!("unexpected character! {}", lexeme),
@@ -326,10 +329,29 @@ mod test {
         let source_code = "a==b";
         let tokens = lexer.lex(source_code).unwrap();
 
+        let expected = vec![
+            Token::new(TokenType::Identifier, "a".to_string(), 1), 
+            Token::new(TokenType::EqualEqual, "==".to_string(), 1),
+            Token::new(TokenType::Identifier, "b".to_string(), 1),
+            ];
+
+        tokens.iter().zip(expected.iter()).for_each(|(token, expected_token)| {
+            assert_eq!(token, expected_token);
+        });
+
         let source_code = "a!=b";
         let tokens = lexer.lex(source_code).unwrap();
 
-        todo!()
+        let expected = vec![
+            Token::new(TokenType::Identifier, "a".to_string(), 1),
+            Token::new(TokenType::BangEqual, "!=".to_string(), 1),
+            Token::new(TokenType::Identifier, "b".to_string(), 1),
+        ];
+
+        tokens.iter().zip(expected.iter()).for_each(|(token, expected_token)| {
+            assert_eq!(token, expected_token);
+        }); 
+
     }
 
     #[test]

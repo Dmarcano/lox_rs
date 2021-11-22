@@ -1,8 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use::lox_lib::lexer::{Lexer};
 
-fn main() { 
+pub fn criterion_benchmark(c: &mut Criterion) {
+    let mut lexer = Lexer::new();
+    let src_code = generate_src_code();
 
-    todo!()
+    c.bench_function("lex simple main", |b| b.iter(|| lexer.lex(black_box(&src_code))));
 }
 
 fn generate_src_code() -> &'static str {
@@ -16,4 +19,6 @@ fn generate_src_code() -> &'static str {
     }
     "#
 }
-    
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);

@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 
-use lox_lib::{interpreter::{Interpreter, InterpreterMode},lexer::{Lexer, Token}};
+use lox_lib::{interpreter::{Interpreter, InterpreterMode}, lexer::{Lexer, Token}};
 
 
 fn main() -> Result<()> {

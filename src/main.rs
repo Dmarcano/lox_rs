@@ -1,11 +1,7 @@
 use anyhow::{anyhow, Context, Result};
-pub mod interpreter;
-/// the interpreter can be run in one of two modes.
-/// either it can be running a single script that is specified or
-/// it can be running in interactive mode where it functions as a REPL.
-pub mod lexer;
 
-use interpreter::{Interpreter, InterpreterMode};
+use lox_lib::{interpreter::{Interpreter, InterpreterMode},lexer::{Lexer, Token}};
+
 
 fn main() -> Result<()> {
     let matches = std::env::args().collect::<Vec<String>>();

@@ -262,6 +262,16 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "lazy_static",
+ "lox_lib",
+]
+
+[[package]]
+name = "lox_lib"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
  "criterion",
  "lazy_static",
 ]

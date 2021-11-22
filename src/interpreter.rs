@@ -22,6 +22,7 @@ impl Interpreter {
     }
 
     pub fn run_script(&self, path: String) -> Result<()> {
+        println!("Running script: {}", path);
         let source = std::fs::read_to_string(&path)
             .with_context(|| format!("Failed to read in file from {}", path))?;
         self.run_on_string(source)
@@ -30,6 +31,8 @@ impl Interpreter {
     fn run_on_string(&self, source: String) -> Result<()> {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(&source)?;
+
+        tokens.iter().for_each(|token| println!("{:?}", token));
 
         Ok(())
     }

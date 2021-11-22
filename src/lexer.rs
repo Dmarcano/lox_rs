@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 lazy_static! {
     static ref RESERVED_KEYWORDS: HashMap<&'static str, TokenType> = {
         let mut m = HashMap::new();
-        m.insert("fn", TokenType::Fun);
+        m.insert("fun", TokenType::Fun);
         m.insert("var", TokenType::Var);
         m.insert("if", TokenType::If);
         m.insert("else", TokenType::Else);
@@ -114,13 +114,14 @@ impl Lexer {
 
     /// break a string-slice of utf8-characters into a sequence of tokens.
     pub fn lex(&mut self, input: &str) -> Result<Vec<Token>> {
-        let out = input
+        let nested_tokens = input
             .lines()
             .enumerate()
             .map(|(line_number, line)| self.lex_chars(line.chars(), 1 + line_number as u32))
             .collect::<Result<Vec<_>>>()?;
-
-        Ok(out.into_iter().flatten().collect())
+        let mut tokens = nested_tokens.into_iter().flatten().collect::<Vec<_>>();
+        tokens.push(Token::new(TokenType::Eof, "".to_string(), 0));
+        Ok(tokens)
     }
 
     // TODOOOO: Handle comments
@@ -337,6 +338,11 @@ mod test {
     }
 
     #[test]
+    fn lexer_lex_line_error_test() {
+        todo!()
+    }
+
+    #[test]
     fn lexer_lex_line_proper_test() {
         let source_code = "({ )}\n+ - !";
         let mut lexer = Lexer::new();
@@ -349,6 +355,7 @@ mod test {
             Token::new(TokenType::Plus, "+".to_string(), 2),
             Token::new(TokenType::Minus, "-".to_string(), 2),
             Token::new(TokenType::Bang, "!".to_string(), 2),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens.iter().zip(expected.iter()).for_each(|(t, e)| {
@@ -362,7 +369,10 @@ mod test {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(source_code).unwrap();
 
-        let expected = vec![Token::new(TokenType::Identifier, "foobar".to_string(), 1)];
+        let expected = vec![
+            Token::new(TokenType::Identifier, "foobar".to_string(), 1),
+            Token::new(TokenType::Eof, "".to_string(), 0),
+        ];
 
         tokens.iter().zip(expected.iter()).for_each(|(t, e)| {
             assert_eq!(t, e);
@@ -379,6 +389,7 @@ mod test {
             Token::new(TokenType::Identifier, "a".to_string(), 1),
             Token::new(TokenType::Plus, "+".to_string(), 1),
             Token::new(TokenType::Identifier, "b".to_string(), 1),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens
@@ -395,6 +406,7 @@ mod test {
             Token::new(TokenType::Identifier, "a".to_string(), 1),
             Token::new(TokenType::EqualEqual, "==".to_string(), 1),
             Token::new(TokenType::Identifier, "b".to_string(), 1),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens
@@ -411,6 +423,7 @@ mod test {
             Token::new(TokenType::Identifier, "a".to_string(), 1),
             Token::new(TokenType::BangEqual, "!=".to_string(), 1),
             Token::new(TokenType::Identifier, "b".to_string(), 1),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens
@@ -427,6 +440,7 @@ mod test {
             Token::new(TokenType::Number(123.0), "123".to_string(), 1),
             Token::new(TokenType::Slash, "/".to_string(), 1),
             Token::new(TokenType::Number(45.45), "45.45".to_string(), 1),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens
@@ -438,11 +452,6 @@ mod test {
     }
 
     #[test]
-    fn lexer_lex_line_error_test() {
-        todo!()
-    }
-
-    #[test]
     fn lexer_number_literal_test() {
         let number_literals = "123.456\n123";
         let mut lexer = Lexer::new();
@@ -450,6 +459,7 @@ mod test {
         let expected = vec![
             Token::new(TokenType::Number(123.456), "123.456".to_string(), 1),
             Token::new(TokenType::Number(123.0), "123".to_string(), 2),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens
@@ -475,6 +485,7 @@ mod test {
                 "\"hello world\"".to_string(),
                 1,
             ),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens
@@ -490,7 +501,8 @@ mod test {
         let comment = "// this is a comment";
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(comment).unwrap();
-        assert_eq!(tokens.len(), 0);
+        // the end-of-file token is always in the returned token
+        assert_eq!(tokens.get(0).unwrap(), &Token::new(TokenType::Eof, "".to_string(), 0));
 
         let source_code = "// this is a comment\n a + b = 0";
         let tokens = lexer.lex(source_code).unwrap();
@@ -501,6 +513,7 @@ mod test {
             Token::new(TokenType::Identifier, "b".to_string(), 2),
             Token::new(TokenType::Equal, "=".to_string(), 2),
             Token::new(TokenType::Number(0.0), "0".to_string(), 2),
+            Token::new(TokenType::Eof, "".to_string(), 0),
         ];
 
         tokens

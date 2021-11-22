@@ -2,8 +2,7 @@ use std::{collections::HashMap, iter::Peekable, str::Chars};
 
 use lazy_static::lazy_static;
 
-
-lazy_static! { 
+lazy_static! {
     static ref RESERVED_KEYWORDS: HashMap<&'static str, TokenType> = {
         let mut m = HashMap::new();
         m.insert("fn", TokenType::Fun);
@@ -88,7 +87,6 @@ pub struct Token {
     pub line: u32,
     /// Used solely for debugging purposes to print the token literall to the console
     lexeme: Option<String>,
-
 }
 
 impl Token {
@@ -100,7 +98,6 @@ impl Token {
             line,
         }
     }
-    
 }
 
 /// A lexer (or scanner) is responsible for breaking a program into a sequence of tokens.
@@ -112,9 +109,7 @@ pub struct Lexer {
 /// as a string of characters which adhere to the Lox language syntax.
 impl Lexer {
     pub fn new() -> Self {
-        Self {
-            debug : false
-        }
+        Self { debug: false }
     }
 
     /// break a string-slice of utf8-characters into a sequence of tokens.
@@ -185,7 +180,11 @@ impl Lexer {
                 '!' => {
                     if next_peek == Some(&'=') {
                         peek.next();
-                        Ok(Token::new(TokenType::BangEqual, "!=".to_string(), line_number))
+                        Ok(Token::new(
+                            TokenType::BangEqual,
+                            "!=".to_string(),
+                            line_number,
+                        ))
                     } else {
                         Ok(Token::new(TokenType::Bang, lexeme, line_number))
                     }
@@ -193,7 +192,11 @@ impl Lexer {
                 '=' => {
                     if next_peek == Some(&'=') {
                         peek.next();
-                        Ok(Token::new(TokenType::EqualEqual, "==".to_string(), line_number))
+                        Ok(Token::new(
+                            TokenType::EqualEqual,
+                            "==".to_string(),
+                            line_number,
+                        ))
                     } else {
                         Ok(Token::new(TokenType::Equal, lexeme, line_number))
                     }
@@ -201,7 +204,11 @@ impl Lexer {
                 '>' => {
                     if next_peek == Some(&'=') {
                         peek.next();
-                        Ok(Token::new(TokenType::GreaterEqual, ">=".to_string(), line_number))
+                        Ok(Token::new(
+                            TokenType::GreaterEqual,
+                            ">=".to_string(),
+                            line_number,
+                        ))
                     } else {
                         Ok(Token::new(TokenType::Greater, lexeme, line_number))
                     }
@@ -209,7 +216,11 @@ impl Lexer {
                 '<' => {
                     if next_peek == Some(&'=') {
                         peek.next();
-                        Ok(Token::new(TokenType::LessEqual, "<=".to_string(), line_number))
+                        Ok(Token::new(
+                            TokenType::LessEqual,
+                            "<=".to_string(),
+                            line_number,
+                        ))
                     } else {
                         Ok(Token::new(TokenType::Less, lexeme, line_number))
                     }
@@ -218,7 +229,7 @@ impl Lexer {
                     // ignore whitespace characters
                     continue;
                 }
-                '\'' => Lexer::lex_string_literals(lexeme, &mut peek, line_number),
+                '\'' | '\"' => Lexer::lex_string_literals(lexeme, &mut peek, line_number),
                 num if num.is_numeric() => {
                     Lexer::lex_number_literals(lexeme, &mut peek, line_number)
                 }
@@ -235,6 +246,8 @@ impl Lexer {
         Ok(tokens)
     }
 
+    // TODO: Handle string literals with different identifiers " " vs ' ' and " '. Should enforce that the string is terminated by the same identifier.
+    //
     /// keep consuming the set of characters inside of peek until another " character is found or the end of the string is reached which results in an error.
     fn lex_string_literals(
         lexeme: String,
@@ -244,10 +257,12 @@ impl Lexer {
         let mut val = String::with_capacity(10);
 
         while let Some(char) = peek.peek() {
-            val.push(char.clone());
-            if char == &'\"' {
+            if char == &'\"' || char == &'\'' {
+                let char = peek.next().unwrap(); // consume the terminating string literal\
+                let lexeme = format!("{}{}{}", lexeme.clone(), val.clone(), char);
                 return Ok(Token::new(TokenType::String(val), lexeme, line_number));
             }
+            val.push(char.clone());
             peek.next();
         }
         Err(anyhow!(Lexer::lexical_error(
@@ -293,27 +308,25 @@ impl Lexer {
         let mut val = String::with_capacity(10);
         val.push_str(&lexeme);
 
-        let check_keyword = |val : String| -> Token { 
-            if RESERVED_KEYWORDS.contains_key(&*val) { 
+        let check_keyword = |val: String| -> Token {
+            if RESERVED_KEYWORDS.contains_key(&*val) {
                 let token_type = RESERVED_KEYWORDS.get(&*val).unwrap();
-                // token type does not implement copy since one of the members is a String 
+                // token type does not implement copy since one of the members is a String
                 // but we clone here when it can't be string so it is very cheap to do so
                 return Token::new(token_type.clone(), val, line_number);
-            }
-            else { 
+            } else {
                 return Token::new(TokenType::Identifier, val, line_number);
             }
-        };  
+        };
         // keep adding the identifier
         while let Some(char) = peek.peek() {
             if char.is_alphanumeric() || *char == '_' {
                 val.push(*char);
                 peek.next();
-            }
-            else { 
-                // in case any trailing whitespace or another non-identifier character is found after 
+            } else {
+                // in case any trailing whitespace or another non-identifier character is found after
                 // the identifier token
-                return Ok(check_keyword(val))
+                return Ok(check_keyword(val));
             }
         }
         // in case the identifier is at the end of the line we still return it
@@ -355,14 +368,12 @@ mod test {
     }
 
     #[test]
-    fn lext_identifiers() { 
+    fn lext_identifiers() {
         let source_code = "foobar      ";
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(source_code).unwrap();
 
-        let expected = vec![
-            Token::new(TokenType::Identifier, "foobar".to_string(), 1),
-        ];
+        let expected = vec![Token::new(TokenType::Identifier, "foobar".to_string(), 1)];
 
         tokens.iter().zip(expected.iter()).for_each(|(t, e)| {
             assert_eq!(t, e);
@@ -392,14 +403,17 @@ mod test {
         let tokens = lexer.lex(source_code).unwrap();
 
         let expected = vec![
-            Token::new(TokenType::Identifier, "a".to_string(), 1), 
+            Token::new(TokenType::Identifier, "a".to_string(), 1),
             Token::new(TokenType::EqualEqual, "==".to_string(), 1),
             Token::new(TokenType::Identifier, "b".to_string(), 1),
-            ];
+        ];
 
-        tokens.iter().zip(expected.iter()).for_each(|(token, expected_token)| {
-            assert_eq!(token, expected_token);
-        });
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
 
         let source_code = "a!=b";
         let tokens = lexer.lex(source_code).unwrap();
@@ -410,23 +424,28 @@ mod test {
             Token::new(TokenType::Identifier, "b".to_string(), 1),
         ];
 
-        tokens.iter().zip(expected.iter()).for_each(|(token, expected_token)| {
-            assert_eq!(token, expected_token);
-        }); 
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
 
         let source_code = "123/45.45";
         let tokens = lexer.lex(source_code).unwrap();
 
-        let expected = vec! [
+        let expected = vec![
             Token::new(TokenType::Number(123.0), "123".to_string(), 1),
             Token::new(TokenType::Slash, "/".to_string(), 1),
             Token::new(TokenType::Number(45.45), "45.45".to_string(), 1),
         ];
 
-        tokens.iter().zip(expected.iter()).for_each(|(token, expected_token)| {
-            assert_eq!(token, expected_token);
-        }); 
-
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
     }
 
     #[test]
@@ -454,7 +473,27 @@ mod test {
 
     #[test]
     fn lexer_string_literal_test() {
-        todo!()
+        let source_code = "var a = \"hello world\"";
+        let mut lexer = Lexer::new();
+        let tokens = lexer.lex(source_code).unwrap();
+
+        let expected = vec![
+            Token::new(TokenType::Var, "var".to_string(), 1),
+            Token::new(TokenType::Identifier, "a".to_string(), 1),
+            Token::new(TokenType::Equal, "=".to_string(), 1),
+            Token::new(
+                TokenType::String("hello world".to_string()),
+                "\"hello world\"".to_string(),
+                1,
+            ),
+        ];
+
+        tokens
+            .iter()
+            .zip(expected.iter())
+            .for_each(|(token, expected_token)| {
+                assert_eq!(token, expected_token);
+            });
     }
 
     #[test]

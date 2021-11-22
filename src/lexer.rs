@@ -200,7 +200,7 @@ impl Lexer {
                     continue;
                 },
                 "\"" => Lexer::lex_string_literals(lexeme, &mut peek, line_number),                
-                _ => Err(anyhow!(Lexer::lexical_error(lexeme, line_number))),
+                _ => Err(anyhow!(Lexer::lexical_error(format!("unexpected character! {}", lexeme), line_number))),
             }?;
             tokens.push(out);
         }
@@ -236,7 +236,21 @@ mod test {
     fn lexer_lex_line_proper_test() {
         let source_code = "({ )}\n+ - !";
         let mut lexer = Lexer::new();
-        todo!()
+        let tokens = lexer.lex(source_code).unwrap();
+        let expected = vec![
+            Token::new(TokenType::LeftParen, "(".to_string(), 1),
+            Token::new(TokenType::LeftBrace, "{".to_string(), 1),
+            Token::new(TokenType::RightParen, ")".to_string(), 1),
+            Token::new(TokenType::RightBrace, "}".to_string(), 1),
+            Token::new(TokenType::Plus, "+".to_string(), 2),
+            Token::new(TokenType::Minus, "-".to_string(), 2),
+            Token::new(TokenType::Bang, "!".to_string(), 2)
+            ];
+        
+        tokens.iter().zip(expected.iter()).for_each(|(t, e)| {
+            assert_eq!(t, e);
+        });
+
     }
 
     #[test]

@@ -3,6 +3,7 @@
 //!
 use crate::lexer::Token;
 
+/// 
 #[derive(Debug, Clone)]
 pub enum Operator { 
     Add,
@@ -18,14 +19,19 @@ pub enum Operator {
     Bang, 
 }
 
+/// 
+#[derive(Debug, Clone)]
+pub enum Literal { 
+    Number(f32),
+    String(String),
+    Boolean(bool),
+    Nil,
+}
 
+/// A node in the AST.
 #[derive(Debug, Clone)]
 pub enum Node { 
-    String(String),
-    Number(f32),
-    True, 
-    False, 
-    Nil, 
+    Literal(Literal),
     Grouping(Box<Node>),
     UnaryExpr{ 
         operator: Operator, 

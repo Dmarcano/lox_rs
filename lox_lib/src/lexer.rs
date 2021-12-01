@@ -502,7 +502,10 @@ mod test {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(comment).unwrap();
         // the end-of-file token is always in the returned token
-        assert_eq!(tokens.get(0).unwrap(), &Token::new(TokenType::Eof, "".to_string(), 0));
+        assert_eq!(
+            tokens.get(0).unwrap(),
+            &Token::new(TokenType::Eof, "".to_string(), 0)
+        );
 
         let source_code = "// this is a comment\n a + b = 0";
         let tokens = lexer.lex(source_code).unwrap();

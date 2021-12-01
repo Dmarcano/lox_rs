@@ -1,7 +1,6 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 
-use lox_lib::{interpreter::{Interpreter, InterpreterMode}, lexer::{Lexer, Token}};
-
+use lox_lib::interpreter::{Interpreter, InterpreterMode};
 
 fn main() -> Result<()> {
     let matches = std::env::args().collect::<Vec<String>>();

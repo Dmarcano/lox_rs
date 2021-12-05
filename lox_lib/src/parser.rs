@@ -4,7 +4,7 @@ use crate::lexer::{Token, TokenType};
 /// a parser for the Lox language. It creates an Abstract Syntax Tree (AST) from a token stream.
 pub struct Parser {}
 
-type ParserBinaryFn = fn(&Parser) -> Node;
+type ParserBinaryFn<'parser, I: Iterator<Item =&'parser Token>> = fn(& Parser, tokens : &mut I) -> Node;
 
 /*
  Reference Lox Grammar (So far)
@@ -30,17 +30,23 @@ impl Parser {
     }
 
     /// This function is used to simplify the implementation of binary expressions. By taking  
-    /// advantage of the fact that the grammar for most binary expressions is very similiar 
+    /// advantage of the fact that the grammar for most binary expressions is very similiar they 
     /// 
-    fn binary_expression_match(
-        &self,
-        precedence_fn: ParserBinaryFn,
+    /// 1. Call some function that follows the precedence rules for Lox. This function will return some AST Node
+    /// 2. Try to match against 
+    /// 
+    fn binary_expression_match<'parser, I>(
+        &'parser self,
+        precedence_fn: ParserBinaryFn<&'parser I>,
         token_types: &[TokenType],
-    ) -> Node {
-        let mut node = precedence_fn(self);
+        tokens:  &mut &'parser I,
+    ) -> Node 
+    where I : Iterator<Item = &'parser Token>
+    {
+        let mut node = precedence_fn( self, tokens);
 
         while let Some(operator) = self.match_tokens(token_types) {
-            let right = self.expression();
+            let right = precedence_fn( self, tokens);
             node = Node::BinaryExpr {
                 operator: operator,
                 left: Box::new(node),
@@ -51,24 +57,31 @@ impl Parser {
     }
 
 
-    pub fn expression(&self) -> Node {
-        self.equality()
+    pub fn expression<'parser>(&self, tokens : Vec<Token>) -> Node {
+        let iter = tokens.iter();
+        self.equality(&mut iter)
     }
 
     /// Performs a binary equality operation on possible expressions. It follows the following grammar.
     /// 
     /// 
     /// `equality  -> comparison ( ("!=" | "==") comparison )* ;`
-    pub fn equality(&self) -> Node {
+    pub fn equality<'parser, I> (&self, tokens:  &mut &'parser I) -> Node 
+    where I : Iterator<Item = &'parser Token>
+    {
 
-        self.binary_expression_match(
-            Parser::comparison,
-            &[TokenType::BangEqual, TokenType::EqualEqual],
-        )
+        todo!()
+        // self.binary_expression_match(
+        //     Parser::comparison::<_> as ParserBinaryFn<_>,
+        //     &[TokenType::BangEqual, TokenType::EqualEqual],
+        //     tokens,
+        // )
     }
 
 
-    pub fn comparison(&self) -> Node {
+    pub fn comparison<'parser, I>(&self, tokens:  &'parser mut I) -> Node 
+    where I : Iterator<Item = &'parser Token>
+    {
         todo!()
     }
 
@@ -95,6 +108,7 @@ impl Parser {
     /// Tries to match the given tokens to the next token in the Iterator/Stream,
     /// If it matches, then it returns true
     pub fn match_tokens(&self, match_tokens: &[TokenType]) -> Option<Operator> {
+        let _iter = match_tokens.iter();
         todo!()
     }
 }

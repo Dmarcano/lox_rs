@@ -4,7 +4,7 @@ use crate::lexer::{Token, TokenType};
 /// a parser for the Lox language. It creates an Abstract Syntax Tree (AST) from a token stream.
 pub struct Parser {}
 
-type ParserBinaryFn = fn(&Parser) -> Node;
+type ParserBinaryFn = fn(&Parser, &mut Vec<Token>) -> Node;
 
 /*
  Reference Lox Grammar (So far)
@@ -36,11 +36,12 @@ impl Parser {
         &self,
         precedence_fn: ParserBinaryFn,
         token_types: &[TokenType],
+        tokens : &mut Vec<Token>,
     ) -> Node {
-        let mut node = precedence_fn(self);
+        let mut node = precedence_fn(self, tokens);
 
         while let Some(operator) = self.match_tokens(token_types) {
-            let right = self.expression();
+            let right = precedence_fn(self, tokens);
             node = Node::BinaryExpr {
                 operator: operator,
                 left: Box::new(node),
@@ -51,24 +52,25 @@ impl Parser {
     }
 
 
-    pub fn expression(&self) -> Node {
-        self.equality()
+    pub fn expression(&self, mut tokens : Vec<Token>) -> Node {
+        self.equality(&mut tokens)
     }
 
     /// Performs a binary equality operation on possible expressions. It follows the following grammar.
     /// 
     /// 
     /// `equality  -> comparison ( ("!=" | "==") comparison )* ;`
-    pub fn equality(&self) -> Node {
+    pub fn equality(&self, tokens : &mut Vec<Token> ) -> Node {
 
         self.binary_expression_match(
             Parser::comparison,
             &[TokenType::BangEqual, TokenType::EqualEqual],
+            tokens,
         )
     }
 
 
-    pub fn comparison(&self) -> Node {
+    pub fn comparison(&self, token : &mut Vec<Token>) -> Node {
         todo!()
     }
 

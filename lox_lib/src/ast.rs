@@ -1,7 +1,6 @@
 //!
 //! This module contains the AST for the Lox language.
 //!
-use crate::lexer::Token;
 
 /// 
 #[derive(Debug, Clone)]

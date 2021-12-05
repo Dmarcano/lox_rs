@@ -1,4 +1,5 @@
 use crate::lexer::{Lexer, Token};
+use crate::parser::Parser;
 use anyhow::{anyhow, Context, Result};
 
 /// the interpreter is responsible for running lox programs either form a file or a REPL
@@ -32,8 +33,8 @@ impl Interpreter {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(&source)?;
 
-        tokens.iter().for_each(|token| println!("{:?}", token));
-
+        let mut parser = Parser::new(); 
+        let node = parser.parse(tokens);
         Ok(())
     }
 

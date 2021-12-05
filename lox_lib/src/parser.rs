@@ -1,6 +1,7 @@
 use crate::ast::{Literal, Node, Operator};
 use crate::lexer::{Token, TokenType};
 
+
 /// a parser for the Lox language. It creates an Abstract Syntax Tree (AST) from a token stream.
 pub struct Parser {}
 
@@ -51,7 +52,7 @@ impl Parser {
         node
     }
 
-    pub fn expression(&self, mut tokens: Vec<Token>) -> Node {
+    fn expression(&self, mut tokens: Vec<Token>) -> Node {
         self.equality(&mut tokens)
     }
 
@@ -59,7 +60,7 @@ impl Parser {
     ///
     ///
     /// `equality  -> comparison ( ("!=" | "==") comparison )* ;`
-    pub fn equality(&self, tokens: &mut Vec<Token>) -> Node {
+    fn equality(&self, tokens: &mut Vec<Token>) -> Node {
         self.binary_expression_match(
             Parser::comparison,
             &[TokenType::BangEqual, TokenType::EqualEqual],
@@ -68,7 +69,7 @@ impl Parser {
     }
 
     ///  comparison -> term ( (">" | "<" | "<=", ">=") term )* ;
-    pub fn comparison(&self, tokens: &mut Vec<Token>) -> Node {
+    fn comparison(&self, tokens: &mut Vec<Token>) -> Node {
         self.binary_expression_match(
             Parser::term,
             &[
@@ -82,16 +83,16 @@ impl Parser {
     }
 
     /// term -> factor ( ("+" | "-") factor )* ;
-    pub fn term(&self, tokens: &mut Vec<Token>) -> Node {
+    fn term(&self, tokens: &mut Vec<Token>) -> Node {
         self.binary_expression_match(Parser::factor, &[TokenType::Plus, TokenType::Minus], tokens)
     }
 
     /// factor -> unary ( ("*" | "/") unary)* ;
-    pub fn factor(&self, tokens: &mut Vec<Token>) -> Node {
+    fn factor(&self, tokens: &mut Vec<Token>) -> Node {
         self.binary_expression_match(Parser::unary, &[TokenType::Star, TokenType::Slash], tokens)
     }
 
-    pub fn unary(&self, tokens: &mut Vec<Token>) -> Node {
+    fn unary(&self, tokens: &mut Vec<Token>) -> Node {
         if let Some(operator) = self.match_operator_tokens(&[TokenType::Bang, TokenType::Minus], tokens) {
             let right = self.unary(tokens);
             return Node::UnaryExpr {
@@ -102,17 +103,23 @@ impl Parser {
         self.primary(tokens)
     }
 
-    pub fn primary(&self, tokens : &mut Vec<Token>) -> Node {
+    // primary -> NUMBER | STRING | "True" | "False" | "Nil" | "("expression")" ;
+    fn primary(&self, tokens : &mut Vec<Token>) -> Node {
         todo!()
     }
 
-    pub fn parse(&self, tokens: Vec<Token>) -> Node {
+    pub fn parse(&mut self, tokens: Vec<Token>) -> Node {
         todo!()
     }
 
+
+    // TODO this is whack. Needs more type safety to prevent the wrong token type from being passed in 
     /// Tries to match the given tokens to the next token in the Iterator/Stream,
-    /// If it matches, then it returns true
-    pub fn match_operator_tokens(
+    /// if the tokens match, it returns the operator token, otherwise it returns None/
+    /// 
+    /// ### Panics 
+    /// If the given tokens are not some sort of operator
+    fn match_operator_tokens(
         &self,
         match_tokens: &[TokenType],
         tokens: &mut Vec<Token>,
@@ -135,6 +142,10 @@ impl Parser {
             },
             None => None
         }
+    }
+
+    fn match_literals() { 
+
     }
 }
 

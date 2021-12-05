@@ -2,9 +2,9 @@
 //! This module contains the AST for the Lox language.
 //!
 
-/// 
+///
 #[derive(Debug, Clone)]
-pub enum Operator { 
+pub enum Operator {
     Add,
     Subtract,
     Multiply,
@@ -15,12 +15,12 @@ pub enum Operator {
     NotEqual,
     And,
     Or,
-    Bang, 
+    Bang,
 }
 
-/// 
+///
 #[derive(Debug, Clone)]
-pub enum Literal { 
+pub enum Literal {
     Number(f32),
     String(String),
     Boolean(bool),
@@ -29,16 +29,16 @@ pub enum Literal {
 
 /// A node in the AST.
 #[derive(Debug, Clone)]
-pub enum Node { 
+pub enum Node {
     Literal(Literal),
     Grouping(Box<Node>),
-    UnaryExpr{ 
-        operator: Operator, 
-        right: Box<Node> 
+    UnaryExpr {
+        operator: Operator,
+        right: Box<Node>,
     },
-    BinaryExpr{ 
-        left: Box<Node>, 
-        operator: Operator, 
-        right: Box<Node> 
+    BinaryExpr {
+        left: Box<Node>,
+        operator: Operator,
+        right: Box<Node>,
     },
 }

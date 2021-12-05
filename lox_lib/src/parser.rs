@@ -40,7 +40,7 @@ impl Parser {
     ) -> Node {
         let mut node = precedence_fn(self, tokens);
 
-        while let Some(operator) = self.match_tokens(token_types, tokens) {
+        while let Some(operator) = self.match_operator_tokens(token_types, tokens) {
             let right = precedence_fn(self, tokens);
             node = Node::BinaryExpr {
                 operator: operator,
@@ -92,7 +92,7 @@ impl Parser {
     }
 
     pub fn unary(&self, tokens: &mut Vec<Token>) -> Node {
-        if let Some(operator) = self.match_tokens(&[TokenType::Bang, TokenType::Minus], tokens) {
+        if let Some(operator) = self.match_operator_tokens(&[TokenType::Bang, TokenType::Minus], tokens) {
             let right = self.unary(tokens);
             return Node::UnaryExpr {
                 operator: operator,
@@ -112,7 +112,7 @@ impl Parser {
 
     /// Tries to match the given tokens to the next token in the Iterator/Stream,
     /// If it matches, then it returns true
-    pub fn match_tokens(
+    pub fn match_operator_tokens(
         &self,
         match_tokens: &[TokenType],
         tokens: &mut Vec<Token>,

@@ -30,17 +30,17 @@ impl Parser {
     }
 
     /// This function is used to simplify the implementation of binary expressions. By taking  
-    /// advantage of the fact that the grammar for most binary expressions is very similiar 
-    /// 
+    /// advantage of the fact that the grammar for most binary expressions is very similiar
+    ///
     fn binary_expression_match(
         &self,
         precedence_fn: ParserBinaryFn,
         token_types: &[TokenType],
-        tokens : &mut Vec<Token>,
+        tokens: &mut Vec<Token>,
     ) -> Node {
         let mut node = precedence_fn(self, tokens);
 
-        while let Some(operator) = self.match_tokens(token_types) {
+        while let Some(operator) = self.match_tokens(token_types, tokens) {
             let right = precedence_fn(self, tokens);
             node = Node::BinaryExpr {
                 operator: operator,
@@ -51,17 +51,15 @@ impl Parser {
         node
     }
 
-
-    pub fn expression(&self, mut tokens : Vec<Token>) -> Node {
+    pub fn expression(&self, mut tokens: Vec<Token>) -> Node {
         self.equality(&mut tokens)
     }
 
     /// Performs a binary equality operation on possible expressions. It follows the following grammar.
-    /// 
-    /// 
+    ///
+    ///
     /// `equality  -> comparison ( ("!=" | "==") comparison )* ;`
-    pub fn equality(&self, tokens : &mut Vec<Token> ) -> Node {
-
+    pub fn equality(&self, tokens: &mut Vec<Token>) -> Node {
         self.binary_expression_match(
             Parser::comparison,
             &[TokenType::BangEqual, TokenType::EqualEqual],
@@ -69,24 +67,42 @@ impl Parser {
         )
     }
 
-
-    pub fn comparison(&self, token : &mut Vec<Token>) -> Node {
-        todo!()
+    ///  comparison -> term ( (">" | "<" | "<=", ">=") term )* ;
+    pub fn comparison(&self, tokens: &mut Vec<Token>) -> Node {
+        self.binary_expression_match(
+            Parser::term,
+            &[
+                TokenType::Less,
+                TokenType::Greater,
+                TokenType::LessEqual,
+                TokenType::GreaterEqual,
+            ],
+            tokens,
+        )
     }
 
-    pub fn term(&self) -> Node {
-        todo!()
+    /// term -> factor ( ("+" | "-") factor )* ;
+    pub fn term(&self, tokens: &mut Vec<Token>) -> Node {
+        self.binary_expression_match(Parser::factor, &[TokenType::Plus, TokenType::Minus], tokens)
     }
 
-    pub fn factor(&self) -> Node {
-        todo!()
+    /// factor -> unary ( ("*" | "/") unary)* ;
+    pub fn factor(&self, tokens: &mut Vec<Token>) -> Node {
+        self.binary_expression_match(Parser::unary, &[TokenType::Star, TokenType::Slash], tokens)
     }
 
-    pub fn unary(&self) -> Node {
-        todo!()
+    pub fn unary(&self, tokens: &mut Vec<Token>) -> Node {
+        if let Some(operator) = self.match_tokens(&[TokenType::Bang, TokenType::Minus], tokens) {
+            let right = self.unary(tokens);
+            return Node::UnaryExpr {
+                operator: operator,
+                right: Box::new(right),
+            };
+        };
+        self.primary(tokens)
     }
 
-    pub fn primary(&self) -> Node {
+    pub fn primary(&self, tokens : &mut Vec<Token>) -> Node {
         todo!()
     }
 
@@ -96,8 +112,29 @@ impl Parser {
 
     /// Tries to match the given tokens to the next token in the Iterator/Stream,
     /// If it matches, then it returns true
-    pub fn match_tokens(&self, match_tokens: &[TokenType]) -> Option<Operator> {
-        todo!()
+    pub fn match_tokens(
+        &self,
+        match_tokens: &[TokenType],
+        tokens: &mut Vec<Token>,
+    ) -> Option<Operator> {
+
+        let mut out = None; 
+
+        if let Some(token) = tokens.get(0) {
+            if match_tokens.contains(&token.token_type) {
+                out =  Some(Operator::try_from(token).unwrap());
+            }
+        }
+        // this second match is done to remove the matched token from the iterator
+        match out { 
+            Some(operator) => {
+                // TODO: using a Vec leads to constant O(n) time complexity for every match. 
+                // quick fix is to use Deque
+                tokens.remove(0);
+                Some(operator)
+            },
+            None => None
+        }
     }
 }
 
@@ -107,6 +144,11 @@ mod test {
 
     #[test]
     fn expression_test() {
+        todo!()
+    }
+
+    #[test]
+    fn match_tokens_test() {
         todo!()
     }
 

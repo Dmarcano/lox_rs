@@ -214,21 +214,21 @@ mod test {
         let mut parser = Parser::new();
         let tokens = vec![
             Token::new(TokenType::Number(1.0), 1.to_string(), 1),
-            Token::new(TokenType::Plus, 1.to_string(), 2),
-            Token::new(TokenType::Number(2.0), 1.to_string(), 3),
-            Token::new(TokenType::Star, 1.to_string(), 4),
-            Token::new(TokenType::Minus, 1.to_string(), 5),
-            Token::new(TokenType::Number(3.0), 1.to_string(), 6),
+            Token::new(TokenType::Plus, 1.to_string(), 1 ),
+            Token::new(TokenType::Number(2.0), 1.to_string(), 1),
+            Token::new(TokenType::Star, 1.to_string(), 1),
+            Token::new(TokenType::Minus, 1.to_string(), 1),
+            Token::new(TokenType::Number(3.0), 1.to_string(), 1),
         ];
         let node = parser.parse(tokens);
         let expected_node = Node::BinaryExpr {
-            operator: Operator::Add,
+            operator: Operator::Add{line : 1},
             left: Box::new(Node::Literal(Literal::Number(1.0))),
             right: Box::new(Node::BinaryExpr {
-                operator: Operator::Multiply,
+                operator: Operator::Multiply{line : 1},
                 left: Box::new(Node::Literal(Literal::Number(2.0))),
                 right: Box::new(Node::UnaryExpr {
-                    operator: Operator::Subtract,
+                    operator: Operator::Subtract{line : 1},
                     right: Box::new(Node::Literal(Literal::Number(3.0))),
                 }),
             }),
@@ -254,16 +254,13 @@ mod test {
         let expected_node = Node::BinaryExpr {
             left: Box::new(Node::BinaryExpr {
                 left: Box::new(Node::Literal(Literal::Number(6.0))),
-                operator: Operator::Divide,
+                operator: Operator::Divide{line : 1},
                 right: Box::new(Node::Literal(Literal::Number(3.0))),
             }),
 
-            operator: Operator::Subtract,
+            operator: Operator::Subtract{line : 1},
             right: Box::new(Node::Literal(Literal::Number(1.0))),
         };
-        println!("{:#?}", expected_node);
-        println!("\n================================= onto the next one \n");
-        println!("{:#?}", node);
 
         assert_eq!(expected_node, node);
     }
@@ -273,13 +270,13 @@ mod test {
         // testing the equality of the following expression
         // 'a' == 'b'
         let tokens = [
-            Token::new(TokenType::String("a".to_string()), "a".to_string(), 0),
-            Token::new(TokenType::EqualEqual, "==".to_string(), 0),
-            Token::new(TokenType::String("b".to_string()), "b".to_string(), 0),
+            Token::new(TokenType::String("a".to_string()), "a".to_string(), 1),
+            Token::new(TokenType::EqualEqual, "==".to_string(), 1),
+            Token::new(TokenType::String("b".to_string()), "b".to_string(), 1),
         ]
         .to_vec();
         let expected_node = Node::BinaryExpr {
-            operator: Operator::EqualEqual,
+            operator: Operator::EqualEqual{line : 1},
             left: Box::new(Node::Literal(Literal::String("a".to_string()))),
             right: Box::new(Node::Literal(Literal::String("b".to_string()))),
         };

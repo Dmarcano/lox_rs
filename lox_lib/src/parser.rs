@@ -192,13 +192,71 @@ mod test {
     use super::*;
 
     #[test]
-    fn expression_test() {
+    fn grouping_test() {
         todo!()
     }
 
     #[test]
-    fn match_tokens_test() {
-        todo!()
+    fn unary_binary_expression_test() {
+        // testing the node created from the following expression
+        // 1 + 2 * -3  
+
+        // (1) + (2 * (-3) )
+        let mut parser = Parser::new();
+        let tokens = vec![
+            Token::new(TokenType::Number(1.0), 1.to_string(), 1),
+            Token::new(TokenType::Plus, 1.to_string(), 2),
+            Token::new(TokenType::Number(2.0), 1.to_string(), 3),
+            Token::new(TokenType::Star, 1.to_string(), 4),
+            Token::new(TokenType::Minus, 1.to_string(), 5),
+            Token::new(TokenType::Number(3.0), 1.to_string(), 6),
+        ];
+        let node = parser.parse(tokens); 
+        let expected_node = Node::BinaryExpr { 
+            operator: Operator::Add, 
+            left : Box::new(Node::Literal(Literal::Number(1.0))),
+            right : Box::new(Node::BinaryExpr { 
+                operator : Operator::Multiply,
+                left : Box::new(Node::Literal(Literal::Number(2.0))),
+                right : Box::new(Node::UnaryExpr {
+                    operator: Operator::Subtract,
+                    right : Box::new(Node::Literal(Literal::Number(3.0))),
+                })
+            })
+        };
+
+        assert_eq!(node, expected_node); 
+
+    }
+
+    #[test]
+    fn crafting_interpreters_example_test() {
+        // testing the node created from the following expression 
+        // 6 / 3 - 1
+        let mut parser = Parser::new();
+        let tokens = vec![
+            Token::new(TokenType::Number(6.0), 1.to_string(), 1),
+            Token::new(TokenType::Slash, 1.to_string(), 1),
+            Token::new(TokenType::Number(3.0), 1.to_string(), 1),
+            Token::new(TokenType::Minus, 1.to_string(), 1),
+            Token::new(TokenType::Number(1.0), 1.to_string(), 1),];
+        let node = parser.parse(tokens);
+        
+        let expected_node = Node::BinaryExpr { 
+            left : Box::new(Node::BinaryExpr { 
+                left : Box::new(Node::Literal(Literal::Number(6.0))),
+                operator : Operator::Divide,
+                right : Box::new(Node::Literal(Literal::Number(3.0)))
+            }),
+            
+            operator : Operator::Subtract,
+            right : Box::new(Node::Literal(Literal::Number(1.0)) )
+        };
+        println!("{:#?}", expected_node);
+        println!("\n================================= onto the next one \n");
+        println!("{:#?}", node);
+
+        assert_eq!(expected_node, node);
     }
 
     #[test]
@@ -218,5 +276,19 @@ mod test {
         let mut parser = Parser::new();
         let node = parser.parse(tokens);
         assert_eq!(node, expected_node);
+
+
+        // testing the equality of the following expression
+        // 1 != 2 == 3 != 'b' 
+        let _tokens = [
+            Token::new(TokenType::Number(1.0), "1".to_string(), 0),
+            Token::new(TokenType::BangEqual, "!=".to_string(), 0),
+            Token::new(TokenType::Number(2.0), "2".to_string(), 0),
+            Token::new(TokenType::EqualEqual, "==".to_string(), 0),
+            Token::new(TokenType::Number(3.0), "3".to_string(), 0),
+            Token::new(TokenType::BangEqual, "!=".to_string(), 0),
+            Token::new(TokenType::String("b".to_string()), "b".to_string(), 0),
+        ].to_vec();
+
     }
 }

@@ -4,8 +4,8 @@
 
 use crate::lexer::{Token, TokenType};
 
-///
-#[derive(Debug, Clone)]
+/// The operators supported by the Lox language.
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Operator {
     Add,
     Subtract,
@@ -14,6 +14,7 @@ pub enum Operator {
     GreaterThan,
     LessThan,
     Equal,
+    EqualEqual,
     NotEqual,
     And,
     Or,
@@ -24,7 +25,7 @@ impl TryFrom<&Token> for Operator {
     type Error = String;
 
     fn try_from(token: &Token) -> Result<Self, Self::Error> {
-        match token.token_type { 
+        match token.token_type {
             TokenType::Plus => Ok(Operator::Add),
             TokenType::Minus => Ok(Operator::Subtract),
             TokenType::Star => Ok(Operator::Multiply),
@@ -36,13 +37,14 @@ impl TryFrom<&Token> for Operator {
             TokenType::And => Ok(Operator::And),
             TokenType::Or => Ok(Operator::Or),
             TokenType::Bang => Ok(Operator::Bang),
+            TokenType::EqualEqual => Ok(Operator::EqualEqual),
             _ => Err(format!("{:?} is not an operator", token.token_type)),
         }
     }
 }
 
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Literal {
     Number(f32),
     String(String),
@@ -51,7 +53,7 @@ pub enum Literal {
 }
 
 /// A node in the AST.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Node {
     Literal(Literal),
     Grouping(Box<Node>),

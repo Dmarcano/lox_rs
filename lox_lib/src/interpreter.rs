@@ -33,7 +33,7 @@ impl Interpreter {
         let mut lexer = Lexer::new();
         let tokens = lexer.lex(&source)?;
 
-        let mut parser = Parser::new(); 
+        let mut parser = Parser::new();
         let node = parser.parse(tokens);
         Ok(())
     }

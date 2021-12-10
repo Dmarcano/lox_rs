@@ -52,6 +52,17 @@ pub enum Literal {
     Nil,
 }
 
+impl Literal {
+    pub fn is_falsy(&self) -> bool {
+        match &self {
+            Literal::Number(_) => true,
+            Literal::String(_) => true,
+            Literal::Boolean(val) => *val,
+            Literal::Nil => false,
+        }
+    }
+}
+
 /// A node in the AST.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Node {

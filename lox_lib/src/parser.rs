@@ -1,4 +1,4 @@
-use crate::ast::{Literal, Node, Operator};
+use crate::ast::{Literal, ExprNode, Operator};
 use crate::lexer::{Token, TokenType};
 
 /// a parser for the Lox language. It creates an Abstract Syntax Tree (AST) from a token stream.
@@ -7,7 +7,7 @@ pub struct Parser {
     errors: Vec<String>,
 }
 
-type ParserBinaryFn = fn(&mut Parser, &mut Vec<Token>) -> Node;
+type ParserBinaryFn = fn(&mut Parser, &mut Vec<Token>) -> ExprNode;
 
 /*
  Reference Lox Grammar (So far)
@@ -43,12 +43,12 @@ impl Parser {
         precedence_fn: ParserBinaryFn,
         token_types: &[TokenType],
         tokens: &mut Vec<Token>,
-    ) -> Node {
+    ) -> ExprNode {
         let mut node = precedence_fn(self, tokens);
 
         while let Some(operator) = self.match_operator_tokens(token_types, tokens) {
             let right = precedence_fn(self, tokens);
-            node = Node::BinaryExpr {
+            node = ExprNode::BinaryExpr {
                 operator: operator,
                 left: Box::new(node),
                 right: Box::new(right),
@@ -57,7 +57,7 @@ impl Parser {
         node
     }
 
-    fn expression(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn expression(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         self.equality(tokens)
     }
 
@@ -65,7 +65,7 @@ impl Parser {
     ///
     ///
     /// `equality  -> comparison ( ("!=" | "==") comparison )* ;`
-    fn equality(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn equality(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         self.binary_expression_match(
             Parser::comparison,
             &[TokenType::BangEqual, TokenType::EqualEqual],
@@ -74,7 +74,7 @@ impl Parser {
     }
 
     ///  comparison -> term ( (">" | "<" | "<=", ">=") term )* ;
-    fn comparison(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn comparison(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         self.binary_expression_match(
             Parser::term,
             &[
@@ -88,21 +88,21 @@ impl Parser {
     }
 
     /// term -> factor ( ("+" | "-") factor )* ;
-    fn term(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn term(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         self.binary_expression_match(Parser::factor, &[TokenType::Plus, TokenType::Minus], tokens)
     }
 
     /// factor -> unary ( ("*" | "/") unary)* ;
-    fn factor(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn factor(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         self.binary_expression_match(Parser::unary, &[TokenType::Star, TokenType::Slash], tokens)
     }
 
-    fn unary(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn unary(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         if let Some(operator) =
             self.match_operator_tokens(&[TokenType::Bang, TokenType::Minus], tokens)
         {
             let right = self.unary(tokens);
-            return Node::UnaryExpr {
+            return ExprNode::UnaryExpr {
                 operator: operator,
                 right: Box::new(right),
             };
@@ -111,12 +111,12 @@ impl Parser {
     }
 
     // primary -> NUMBER | STRING | "True" | "False" | "Nil" | "("expression")" ;
-    fn primary(&mut self, tokens: &mut Vec<Token>) -> Node {
+    fn primary(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         return self.match_literals(tokens);
     }
 
     /// Tries to parse a node from the token stream
-    pub fn parse(&mut self, mut tokens: Vec<Token>) -> Node {
+    pub fn parse(&mut self, mut tokens: Vec<Token>) -> ExprNode {
         return self.expression(&mut tokens);
     }
 
@@ -152,18 +152,18 @@ impl Parser {
         }
     }
 
-    fn match_literals(&mut self, tokens: &mut Vec<Token>) -> Node {
-        let mut node: Option<Node> = None;
+    fn match_literals(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
+        let mut node: Option<ExprNode> = None;
 
         if let Some(token) = tokens.get(0) {
             match &token.token_type {
-                TokenType::Number(number) => node = Some(Node::Literal(Literal::Number(*number))),
+                TokenType::Number(number) => node = Some(ExprNode::Literal(Literal::Number(*number))),
                 TokenType::String(string) => {
-                    node = Some(Node::Literal(Literal::String(string.clone())))
+                    node = Some(ExprNode::Literal(Literal::String(string.clone())))
                 }
-                TokenType::False => node = Some(Node::Literal(Literal::Boolean(false))),
-                TokenType::True => node = Some(Node::Literal(Literal::Boolean(true))),
-                TokenType::Nil => node = Some(Node::Literal(Literal::Nil)),
+                TokenType::False => node = Some(ExprNode::Literal(Literal::Boolean(false))),
+                TokenType::True => node = Some(ExprNode::Literal(Literal::Boolean(true))),
+                TokenType::Nil => node = Some(ExprNode::Literal(Literal::Nil)),
                 _ => {
                     // do nothing in case of left parenthesis which needs a mutable reference to tokens
                 }
@@ -180,7 +180,7 @@ impl Parser {
             let expr = self.expression(tokens);
             if tokens[0].token_type == TokenType::RightParen {
                 tokens.remove(0);
-                return Node::Grouping(Box::new(expr));
+                return ExprNode::Grouping(Box::new(expr));
             } else {
                 self.panic_mode = true;
                 self.send_err("Expected ')' after expression");
@@ -226,15 +226,15 @@ mod test {
             Token::new(TokenType::Number(3.0), 1.to_string(), 1),
         ];
         let node = parser.parse(tokens);
-        let expected_node = Node::BinaryExpr {
+        let expected_node = ExprNode::BinaryExpr {
             operator: Operator::Add { line: 1 },
-            left: Box::new(Node::Literal(Literal::Number(1.0))),
-            right: Box::new(Node::BinaryExpr {
+            left: Box::new(ExprNode::Literal(Literal::Number(1.0))),
+            right: Box::new(ExprNode::BinaryExpr {
                 operator: Operator::Multiply { line: 1 },
-                left: Box::new(Node::Literal(Literal::Number(2.0))),
-                right: Box::new(Node::UnaryExpr {
+                left: Box::new(ExprNode::Literal(Literal::Number(2.0))),
+                right: Box::new(ExprNode::UnaryExpr {
                     operator: Operator::Subtract { line: 1 },
-                    right: Box::new(Node::Literal(Literal::Number(3.0))),
+                    right: Box::new(ExprNode::Literal(Literal::Number(3.0))),
                 }),
             }),
         };
@@ -256,15 +256,15 @@ mod test {
         ];
         let node = parser.parse(tokens);
 
-        let expected_node = Node::BinaryExpr {
-            left: Box::new(Node::BinaryExpr {
-                left: Box::new(Node::Literal(Literal::Number(6.0))),
+        let expected_node = ExprNode::BinaryExpr {
+            left: Box::new(ExprNode::BinaryExpr {
+                left: Box::new(ExprNode::Literal(Literal::Number(6.0))),
                 operator: Operator::Divide { line: 1 },
-                right: Box::new(Node::Literal(Literal::Number(3.0))),
+                right: Box::new(ExprNode::Literal(Literal::Number(3.0))),
             }),
 
             operator: Operator::Subtract { line: 1 },
-            right: Box::new(Node::Literal(Literal::Number(1.0))),
+            right: Box::new(ExprNode::Literal(Literal::Number(1.0))),
         };
 
         assert_eq!(expected_node, node);
@@ -280,10 +280,10 @@ mod test {
             Token::new(TokenType::String("b".to_string()), "b".to_string(), 1),
         ]
         .to_vec();
-        let expected_node = Node::BinaryExpr {
+        let expected_node = ExprNode::BinaryExpr {
             operator: Operator::EqualEqual { line: 1 },
-            left: Box::new(Node::Literal(Literal::String("a".to_string()))),
-            right: Box::new(Node::Literal(Literal::String("b".to_string()))),
+            left: Box::new(ExprNode::Literal(Literal::String("a".to_string()))),
+            right: Box::new(ExprNode::Literal(Literal::String("b".to_string()))),
         };
         let mut parser = Parser::new();
         let node = parser.parse(tokens);

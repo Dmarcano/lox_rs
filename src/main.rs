@@ -11,7 +11,7 @@ fn main() -> Result<()> {
         _ => Err(anyhow!("too many arguments: Usage lox [script]")),
     }?;
 
-    let interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::new();
     interpreter.run(mode)?;
     Ok(())
 }

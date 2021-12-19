@@ -78,30 +78,30 @@ impl Literal {
 }
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 struct BinaryExpr {
-    left: Box<Node>,
-    right: Box<Node>,
+    left: Box<ExprNode>,
+    right: Box<ExprNode>,
     operator: Operator,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 struct UnaryExpr {
-    right: Box<Node>,
+    right: Box<ExprNode>,
     operator: Operator,
 }
 
 /// A node in the AST.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub enum Node {
+pub enum ExprNode {
     Literal(Literal),
-    Grouping(Box<Node>),
+    Grouping(Box<ExprNode>),
     UnaryExpr {
         operator: Operator,
-        right: Box<Node>,
+        right: Box<ExprNode>,
     },
     BinaryExpr {
-        left: Box<Node>,
+        left: Box<ExprNode>,
         operator: Operator,
-        right: Box<Node>,
+        right: Box<ExprNode>,
     },
 }
 
@@ -113,12 +113,12 @@ pub trait Visitor {
     /// Visits nodes in the AST by calling the appropriate method for the node type.
     /// Generally it is up to implementors of this trait to implement the specific visiting methods
     /// but only the visit node method should be used to visit nodes themselves
-    fn visit_node(&mut self, node: &Node) -> Self::Output {
+    fn visit_node(&mut self, node: &ExprNode) -> Self::Output {
         match node {
-            Node::Literal(literal) => self.visit_literal(literal),
-            Node::Grouping(grouping) => self.visit_grouping(grouping),
-            Node::UnaryExpr { operator, right } => self.visit_unary_expr(operator, right),
-            Node::BinaryExpr {
+            ExprNode::Literal(literal) => self.visit_literal(literal),
+            ExprNode::Grouping(grouping) => self.visit_grouping(grouping),
+            ExprNode::UnaryExpr { operator, right } => self.visit_unary_expr(operator, right),
+            ExprNode::BinaryExpr {
                 left,
                 operator,
                 right,
@@ -128,10 +128,10 @@ pub trait Visitor {
 
     fn visit_literal(&mut self, literal: &Literal) -> Self::Output;
 
-    fn visit_grouping(&mut self, grouping: &Node) -> Self::Output;
+    fn visit_grouping(&mut self, grouping: &ExprNode) -> Self::Output;
 
-    fn visit_binary_expr(&mut self, left: &Node, operator: &Operator, right: &Node)
-        -> Self::Output;
+    fn visit_binary_expr(&mut self, left: &ExprNode, operator: &Operator, right: &ExprNode)
+                         -> Self::Output;
 
-    fn visit_unary_expr(&mut self, operator: &Operator, child: &Node) -> Self::Output;
+    fn visit_unary_expr(&mut self, operator: &Operator, child: &ExprNode) -> Self::Output;
 }

@@ -1,4 +1,4 @@
-use crate::ast::{Literal, Node, Operator, Visitor};
+use crate::ast::{Literal, ExprNode, Operator, Visitor};
 use crate::lexer::{Lexer};
 use crate::parser::Parser;
 use anyhow::{anyhow, Context, Result};
@@ -47,16 +47,19 @@ impl Interpreter {
     }
 
     pub fn run_repl(&mut self) -> Result<()> {
+        // print!("\n>> ");
         loop {
             let mut buf = String::new();
+            
             print!(">> ");
             let _ = std::io::stdin().read_line(&mut buf)?;
-            self.run_on_string(buf.clone())?;
-
+            let source = buf.trim().to_string();
+            
+            println!("{}", source);
             if buf == "" {
                 break;
             }
-            println!("{:?}", buf);
+            self.run_on_string(buf.clone())?;
         }
         Ok(())
     }
@@ -115,15 +118,15 @@ impl Visitor for Interpreter {
         Ok(literal.clone())
     }
 
-    fn visit_grouping(&mut self, grouping: &Node) -> Self::Output {
+    fn visit_grouping(&mut self, grouping: &ExprNode) -> Self::Output {
         self.visit_node(grouping)
     }
 
     fn visit_binary_expr(
         &mut self,
-        left: &Node,
+        left: &ExprNode,
         operator: &Operator,
-        right: &Node,
+        right: &ExprNode,
     ) -> Self::Output {
         let left_literal = self.visit_node(left)?;
         let right_literal = self.visit_node(right)?;
@@ -190,7 +193,7 @@ impl Visitor for Interpreter {
         }
     }
 
-    fn visit_unary_expr(&mut self, operator: &Operator, child: &Node) -> Self::Output {
+    fn visit_unary_expr(&mut self, operator: &Operator, child: &ExprNode) -> Self::Output {
         let output = self.visit_node(child)?;
 
         match operator {

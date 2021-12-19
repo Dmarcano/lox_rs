@@ -188,7 +188,12 @@ impl Parser {
             }
         }
 
-        todo!("an unsupported token was found! {:?}", tokens.get(0))
+        self.panic_mode = true;
+        self.send_err(format!(
+            "an unsupported token was found! {:?}",
+            tokens.get(0)
+        ));
+        todo!("Handle this without panic once the rest of the lang is implemented")
     }
 
     fn send_err<T: ToString>(&mut self, message: T) {
@@ -214,7 +219,7 @@ mod test {
         let mut parser = Parser::new();
         let tokens = vec![
             Token::new(TokenType::Number(1.0), 1.to_string(), 1),
-            Token::new(TokenType::Plus, 1.to_string(), 1 ),
+            Token::new(TokenType::Plus, 1.to_string(), 1),
             Token::new(TokenType::Number(2.0), 1.to_string(), 1),
             Token::new(TokenType::Star, 1.to_string(), 1),
             Token::new(TokenType::Minus, 1.to_string(), 1),
@@ -222,13 +227,13 @@ mod test {
         ];
         let node = parser.parse(tokens);
         let expected_node = Node::BinaryExpr {
-            operator: Operator::Add{line : 1},
+            operator: Operator::Add { line: 1 },
             left: Box::new(Node::Literal(Literal::Number(1.0))),
             right: Box::new(Node::BinaryExpr {
-                operator: Operator::Multiply{line : 1},
+                operator: Operator::Multiply { line: 1 },
                 left: Box::new(Node::Literal(Literal::Number(2.0))),
                 right: Box::new(Node::UnaryExpr {
-                    operator: Operator::Subtract{line : 1},
+                    operator: Operator::Subtract { line: 1 },
                     right: Box::new(Node::Literal(Literal::Number(3.0))),
                 }),
             }),
@@ -254,11 +259,11 @@ mod test {
         let expected_node = Node::BinaryExpr {
             left: Box::new(Node::BinaryExpr {
                 left: Box::new(Node::Literal(Literal::Number(6.0))),
-                operator: Operator::Divide{line : 1},
+                operator: Operator::Divide { line: 1 },
                 right: Box::new(Node::Literal(Literal::Number(3.0))),
             }),
 
-            operator: Operator::Subtract{line : 1},
+            operator: Operator::Subtract { line: 1 },
             right: Box::new(Node::Literal(Literal::Number(1.0))),
         };
 
@@ -276,7 +281,7 @@ mod test {
         ]
         .to_vec();
         let expected_node = Node::BinaryExpr {
-            operator: Operator::EqualEqual{line : 1},
+            operator: Operator::EqualEqual { line: 1 },
             left: Box::new(Node::Literal(Literal::String("a".to_string()))),
             right: Box::new(Node::Literal(Literal::String("b".to_string()))),
         };

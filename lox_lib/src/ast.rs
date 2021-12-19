@@ -39,6 +39,8 @@ impl TryFrom<&Token> for Operator {
             TokenType::Or => Ok(Operator::Or { line }),
             TokenType::Bang => Ok(Operator::Bang { line }),
             TokenType::EqualEqual => Ok(Operator::EqualEqual { line }),
+            TokenType::GreaterEqual => Ok(Operator::GreaterThan { line }),
+            TokenType::LessEqual => Ok(Operator::LessThan { line }),
             _ => Err(format!("{:?} is not an operator", token.token_type)),
         }
     }

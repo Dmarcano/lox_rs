@@ -224,7 +224,101 @@ mod test {
         let expr = "!5";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Boolean(false));
+
+        let expr = "-2"; 
+        let result = get_parsed_expr(expr); 
+        assert_eq!(result, Literal::Number(-2.0));
     }
+
+    #[test]
+    fn add_sub_expr_test() { 
+        let expr = "1 + 2"; 
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(3.0));
+
+        let expr = "1 - 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(-1.0));
+
+        let expr = "1 + 2 - 3";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(0.0));
+    }
+
+    #[test]
+    fn mul_sub_test() { 
+        let expr = "1 * 2"; 
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(2.0));
+
+        let expr = "1 / 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(0.5));
+
+        let expr = "1 * 2 / 3";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(2.0/3.0));
+    }
+
+    #[test]
+    fn grouping_test() { 
+        let expr = "1 +(2 * 3)";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(7.0));
+
+        let expr = "(1 + 2) * 3";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(9.0));
+
+        let expr = "(1 + 2) * (3 + 4)";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(21.0));
+
+        let expr = "3 * (1 + 2)";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Number(9.0));
+    }
+
+    #[test]
+    /// tests that the ">", "<", ">=", and "<=" operators work as expected.
+    fn greater_less_than_tests() { 
+        let expr = "1 > 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(false));
+
+        let expr = "1 < 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(true));
+
+        let expr = "1 >= 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(false));
+
+        let expr = "1 <= 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(true));
+    }
+
+    #[test]
+    /// tests that the "==" and "!=" operators work as expected.
+    fn equals_equals_test() { 
+        let expr = "1 == 1";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(true));
+
+        let expr = "1 == 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(false));
+
+        let expr = "1 != 2";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(true));
+
+        let expr = "1 != 1";
+        let result = get_parsed_expr(expr);
+        assert_eq!(result, Literal::Boolean(false));
+    }
+
 
     fn get_parsed_expr(expr: &str) -> Literal {
         let mut lexer = Lexer::new();

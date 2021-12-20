@@ -2,7 +2,28 @@
 //! This module contains the AST for the Lox language.
 //!
 
+
+/// The current Lox grammar is as follows:
+/// program         -> declarations* EOF ;
+/// 
+/// declarations    -> varDecl | statement ; 
+/// 
+/// varDecl         -> "var" IDENTIFIER ("=" expression)? ; 
+/// 
+/// statement       -> expressionStmt | printStmt ;  
+/// 
+/// expressionStmt 	-> expression ";" ; 
+/// 
+/// printStmt  		-> "print" expression ";" ;
+
+
+
 use crate::lexer::{Token, TokenType};
+
+enum StmtNode { 
+    PrintStmt(ExprNode),
+    ExprStmt(ExprNode),
+}
 
 /// The operators supported by the Lox language.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]

@@ -40,9 +40,7 @@ impl Interpreter {
         let tokens = lexer.lex(&source)?;
 
         let mut parser = Parser::new();
-        let node = parser.parse(tokens);
-        let literal=  self.visit_node(&node)?;
-        println!("{:?}", literal);
+        let statement_tree = parser.parse(tokens);
         Ok(())
     }
 
@@ -252,7 +250,7 @@ mod test {
     }
 
     #[test]
-    fn mul_sub_test() { 
+    fn mul_sub_expr_test() { 
         let expr = "1 * 2"; 
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Number(2.0));
@@ -267,7 +265,7 @@ mod test {
     }
 
     #[test]
-    fn grouping_test() { 
+    fn grouping_expr_test() { 
         let expr = "1 +(2 * 3)";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Number(7.0));
@@ -287,7 +285,7 @@ mod test {
 
     #[test]
     /// tests that the ">", "<", ">=", and "<=" operators work as expected.
-    fn greater_less_than_tests() { 
+    fn greater_less_than_expr_tests() { 
         let expr = "1 > 2";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Boolean(false));
@@ -307,7 +305,7 @@ mod test {
 
     #[test]
     /// tests that the "==" and "!=" operators work as expected.
-    fn equals_equals_test() { 
+    fn equals_equals_expr_test() { 
         let expr = "1 == 1";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Boolean(true));
@@ -328,9 +326,9 @@ mod test {
 
     fn get_parsed_expr(expr: &str) -> Literal {
         let mut lexer = Lexer::new();
-        let tokens = lexer.lex(expr).unwrap();
+        let mut tokens = lexer.lex(expr).unwrap();
         let mut parser = Parser::new();
-        let node = parser.parse(tokens);
+        let node = parser.expression(&mut tokens);
         let mut interpreter = Interpreter::new();
         interpreter.visit_node(&node).unwrap()
     }

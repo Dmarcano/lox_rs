@@ -20,7 +20,7 @@
 
 use crate::lexer::{Token, TokenType};
 
-enum StmtNode { 
+pub enum StmtNode { 
     PrintStmt(ExprNode),
     ExprStmt(ExprNode),
 }

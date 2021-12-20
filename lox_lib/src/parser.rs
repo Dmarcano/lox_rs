@@ -1,4 +1,4 @@
-use crate::ast::{Literal, ExprNode, Operator};
+use crate::ast::{Literal, ExprNode, Operator, StmtNode};
 use crate::lexer::{Token, TokenType};
 
 /// a parser for the Lox language. It creates an Abstract Syntax Tree (AST) from a token stream.
@@ -57,7 +57,7 @@ impl Parser {
         node
     }
 
-    fn expression(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
+    pub(crate) fn expression(&mut self, tokens: &mut Vec<Token>) -> ExprNode {
         self.equality(tokens)
     }
 
@@ -116,8 +116,9 @@ impl Parser {
     }
 
     /// Tries to parse a node from the token stream
-    pub fn parse(&mut self, mut tokens: Vec<Token>) -> ExprNode {
-        return self.expression(&mut tokens);
+    pub fn parse(&mut self, mut tokens: Vec<Token>) -> Vec<StmtNode> {
+        todo!()
+        // return self.expression(&mut tokens);
     }
 
     // TODO this is whack. Needs more type safety to prevent the wrong token type from being passed in and silently
@@ -217,7 +218,7 @@ mod test {
 
         // (1) + (2 * (-3) )
         let mut parser = Parser::new();
-        let tokens = vec![
+        let mut tokens = vec![
             Token::new(TokenType::Number(1.0), 1.to_string(), 1),
             Token::new(TokenType::Plus, 1.to_string(), 1),
             Token::new(TokenType::Number(2.0), 1.to_string(), 1),
@@ -225,7 +226,7 @@ mod test {
             Token::new(TokenType::Minus, 1.to_string(), 1),
             Token::new(TokenType::Number(3.0), 1.to_string(), 1),
         ];
-        let node = parser.parse(tokens);
+        let node = parser.expression(&mut tokens);
         let expected_node = ExprNode::BinaryExpr {
             operator: Operator::Add { line: 1 },
             left: Box::new(ExprNode::Literal(Literal::Number(1.0))),
@@ -247,14 +248,14 @@ mod test {
         // testing the node created from the following expression
         // 6 / 3 - 1
         let mut parser = Parser::new();
-        let tokens = vec![
+        let mut tokens = vec![
             Token::new(TokenType::Number(6.0), 1.to_string(), 1),
             Token::new(TokenType::Slash, 1.to_string(), 1),
             Token::new(TokenType::Number(3.0), 1.to_string(), 1),
             Token::new(TokenType::Minus, 1.to_string(), 1),
             Token::new(TokenType::Number(1.0), 1.to_string(), 1),
         ];
-        let node = parser.parse(tokens);
+        let node = parser.expression(&mut tokens);
 
         let expected_node = ExprNode::BinaryExpr {
             left: Box::new(ExprNode::BinaryExpr {
@@ -274,7 +275,7 @@ mod test {
     fn equality_test() {
         // testing the equality of the following expression
         // 'a' == 'b'
-        let tokens = [
+        let mut tokens = [
             Token::new(TokenType::String("a".to_string()), "a".to_string(), 1),
             Token::new(TokenType::EqualEqual, "==".to_string(), 1),
             Token::new(TokenType::String("b".to_string()), "b".to_string(), 1),
@@ -286,7 +287,7 @@ mod test {
             right: Box::new(ExprNode::Literal(Literal::String("b".to_string()))),
         };
         let mut parser = Parser::new();
-        let node = parser.parse(tokens);
+        let node = parser.expression(&mut tokens);
         assert_eq!(node, expected_node);
 
         // testing the equality of the following expression

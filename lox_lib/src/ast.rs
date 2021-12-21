@@ -2,27 +2,25 @@
 //! This module contains the AST for the Lox language.
 //!
 
-
 /// The current Lox grammar is as follows:
 /// program         -> declarations* EOF ;
-/// 
-/// declarations    -> varDecl | statement ; 
-/// 
-/// varDecl         -> "var" IDENTIFIER ("=" expression)? ; 
-/// 
+///
+/// declarations    -> varDecl | statement ;
+///
+/// varDecl         -> "var" IDENTIFIER ("=" expression)? ;
+///
 /// statement       -> expressionStmt | printStmt ;  
-/// 
-/// expressionStmt 	-> expression ";" ; 
-/// 
+///
+/// expressionStmt 	-> expression ";" ;
+///
 /// printStmt  		-> "print" expression ";" ;
-
-
-
 use crate::lexer::{Token, TokenType};
 
-pub enum StmtNode { 
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub enum StmtNode {
     PrintStmt(ExprNode),
     ExprStmt(ExprNode),
+    ErrStmt(String),
 }
 
 /// The operators supported by the Lox language.
@@ -151,8 +149,12 @@ pub trait Visitor {
 
     fn visit_grouping(&mut self, grouping: &ExprNode) -> Self::Output;
 
-    fn visit_binary_expr(&mut self, left: &ExprNode, operator: &Operator, right: &ExprNode)
-                         -> Self::Output;
+    fn visit_binary_expr(
+        &mut self,
+        left: &ExprNode,
+        operator: &Operator,
+        right: &ExprNode,
+    ) -> Self::Output;
 
     fn visit_unary_expr(&mut self, operator: &Operator, child: &ExprNode) -> Self::Output;
 }

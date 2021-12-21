@@ -1,5 +1,5 @@
-use crate::ast::{Literal, ExprNode, Operator, Visitor};
-use crate::lexer::{Lexer};
+use crate::ast::{ExprNode, Literal, Operator, Visitor};
+use crate::lexer::Lexer;
 use crate::parser::Parser;
 use anyhow::{anyhow, Context, Result};
 
@@ -48,11 +48,11 @@ impl Interpreter {
         // print!("\n>> ");
         loop {
             let mut buf = String::new();
-            
+
             print!(">> ");
             let _ = std::io::stdin().read_line(&mut buf)?;
             let source = buf.trim().to_string();
-            
+
             println!("{}", source);
             if buf == "" {
                 break;
@@ -229,14 +229,14 @@ mod test {
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Boolean(false));
 
-        let expr = "-2"; 
-        let result = get_parsed_expr(expr); 
+        let expr = "-2";
+        let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Number(-2.0));
     }
 
     #[test]
-    fn add_sub_expr_test() { 
-        let expr = "1 + 2"; 
+    fn add_sub_expr_test() {
+        let expr = "1 + 2";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Number(3.0));
 
@@ -250,8 +250,8 @@ mod test {
     }
 
     #[test]
-    fn mul_sub_expr_test() { 
-        let expr = "1 * 2"; 
+    fn mul_sub_expr_test() {
+        let expr = "1 * 2";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Number(2.0));
 
@@ -261,11 +261,11 @@ mod test {
 
         let expr = "1 * 2 / 3";
         let result = get_parsed_expr(expr);
-        assert_eq!(result, Literal::Number(2.0/3.0));
+        assert_eq!(result, Literal::Number(2.0 / 3.0));
     }
 
     #[test]
-    fn grouping_expr_test() { 
+    fn grouping_expr_test() {
         let expr = "1 +(2 * 3)";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Number(7.0));
@@ -285,7 +285,7 @@ mod test {
 
     #[test]
     /// tests that the ">", "<", ">=", and "<=" operators work as expected.
-    fn greater_less_than_expr_tests() { 
+    fn greater_less_than_expr_tests() {
         let expr = "1 > 2";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Boolean(false));
@@ -305,7 +305,7 @@ mod test {
 
     #[test]
     /// tests that the "==" and "!=" operators work as expected.
-    fn equals_equals_expr_test() { 
+    fn equals_equals_expr_test() {
         let expr = "1 == 1";
         let result = get_parsed_expr(expr);
         assert_eq!(result, Literal::Boolean(true));
@@ -323,12 +323,11 @@ mod test {
         assert_eq!(result, Literal::Boolean(false));
     }
 
-
     fn get_parsed_expr(expr: &str) -> Literal {
         let mut lexer = Lexer::new();
         let mut tokens = lexer.lex(expr).unwrap();
         let mut parser = Parser::new();
-        let node = parser.expression(&mut tokens);
+        let node = parser.expression(&mut tokens).unwrap();
         let mut interpreter = Interpreter::new();
         interpreter.visit_node(&node).unwrap()
     }

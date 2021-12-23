@@ -124,15 +124,31 @@ pub enum ExprNode {
     },
 }
 
+pub trait StmtVisitor {
+    fn visit_stmt(&mut self, node : &StmtNode) {
+        match node  {
+            StmtNode::PrintStmt(print_stmt) => {self.visit_print_stmt(print_stmt)}
+            StmtNode::ExprStmt(expr) => {self.visit_expr_stmt(expr)}
+            StmtNode::ErrStmt(err) => {self.visit_err_stmt(err.clone())}
+        }
+    }
+
+    fn visit_print_stmt(&mut self, node : &ExprNode);
+
+    fn visit_expr_stmt(&mut self, node : &ExprNode);
+
+    fn visit_err_stmt(&mut self, err : String);
+}
+
 /// The visitor is a trait for parsing and evaluating expressions in an Lox AST made up
 /// of recursive nodes
-pub trait Visitor {
+pub trait ExprVisitor {
     type Output;
 
     /// Visits nodes in the AST by calling the appropriate method for the node type.
     /// Generally it is up to implementors of this trait to implement the specific visiting methods
     /// but only the visit node method should be used to visit nodes themselves
-    fn visit_node(&mut self, node: &ExprNode) -> Self::Output {
+    fn visit_expr_node(&mut self, node: &ExprNode) -> Self::Output {
         match node {
             ExprNode::Literal(literal) => self.visit_literal(literal),
             ExprNode::Grouping(grouping) => self.visit_grouping(grouping),

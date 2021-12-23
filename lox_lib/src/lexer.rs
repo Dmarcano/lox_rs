@@ -120,7 +120,8 @@ impl Lexer {
             .map(|(line_number, line)| self.lex_chars(line.chars(), 1 + line_number as u32))
             .collect::<Result<Vec<_>>>()?;
         let mut tokens = nested_tokens.into_iter().flatten().collect::<Vec<_>>();
-        tokens.push(Token::new(TokenType::Eof, "".to_string(), 0));
+        let final_line = tokens.last().unwrap().line;
+        tokens.push(Token::new(TokenType::Eof, "".to_string(), final_line));
         Ok(tokens)
     }
 

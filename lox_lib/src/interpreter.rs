@@ -1,4 +1,4 @@
-use crate::ast::{ExprNode, Literal, Operator, Visitor};
+use crate::ast::{ExprNode, Literal, Operator, ExprVisitor, StmtNode, StmtVisitor};
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use anyhow::{anyhow, Context, Result};
@@ -40,7 +40,15 @@ impl Interpreter {
         let tokens = lexer.lex(&source)?;
 
         let mut parser = Parser::new();
-        let statement_tree = parser.parse(tokens);
+        let statement_list = parser.parse(tokens);
+        for statement in statement_list {
+            self.execute_statement(statement)?;
+        }
+        Ok(())
+    }
+
+    fn execute_statement(&mut self, statement: StmtNode) -> Result<()> {
+        self.visit_stmt(&statement);
         Ok(())
     }
 
@@ -109,7 +117,30 @@ impl Interpreter {
     }
 }
 
-impl Visitor for Interpreter {
+impl StmtVisitor for Interpreter {
+
+    fn visit_print_stmt(&mut self, node : &ExprNode) {
+        let literal = self.visit_expr_node(node);
+        match literal {
+            Ok(lit) => println!("{:#?}", lit),
+            Err(err) => println!("{:#?}", err),
+        }
+    }
+
+    fn visit_expr_stmt(&mut self, node : &ExprNode) {
+        let literal = self.visit_expr_node(node);
+        match literal {
+            Ok(_) => {},
+            Err(err) => println!("{:#?}", err),
+        }
+    }
+
+    fn visit_err_stmt(&mut self, err : String) {
+        println!("{}", err);
+    }
+}
+
+impl ExprVisitor for Interpreter {
     type Output = Result<Literal>;
 
     fn visit_literal(&mut self, literal: &Literal) -> Self::Output {
@@ -117,7 +148,7 @@ impl Visitor for Interpreter {
     }
 
     fn visit_grouping(&mut self, grouping: &ExprNode) -> Self::Output {
-        self.visit_node(grouping)
+        self.visit_expr_node(grouping)
     }
 
     fn visit_binary_expr(
@@ -126,8 +157,8 @@ impl Visitor for Interpreter {
         operator: &Operator,
         right: &ExprNode,
     ) -> Self::Output {
-        let left_literal = self.visit_node(left)?;
-        let right_literal = self.visit_node(right)?;
+        let left_literal = self.visit_expr_node(left)?;
+        let right_literal = self.visit_expr_node(right)?;
 
         match operator {
             Operator::Add { line } => Interpreter::add_impl(left_literal, right_literal, *line),
@@ -192,7 +223,7 @@ impl Visitor for Interpreter {
     }
 
     fn visit_unary_expr(&mut self, operator: &Operator, child: &ExprNode) -> Self::Output {
-        let output = self.visit_node(child)?;
+        let output = self.visit_expr_node(child)?;
 
         match operator {
             Operator::Bang { line: _ } => return Ok(Literal::Boolean(!output.is_falsy())),
@@ -329,6 +360,6 @@ mod test {
         let mut parser = Parser::new();
         let node = parser.expression(&mut tokens).unwrap();
         let mut interpreter = Interpreter::new();
-        interpreter.visit_node(&node).unwrap()
+        interpreter.visit_expr_node(&node).unwrap()
     }
 }

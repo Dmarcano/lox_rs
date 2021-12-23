@@ -125,7 +125,7 @@ impl Parser {
         let expr = self.expression(tokens)?;
         match Parser::consume(TokenType::Semicolon, tokens) {
             Ok(_) => Ok(StmtNode::PrintStmt(expr)),
-            Err(_) => Err(anyhow!("Expected ';' after a statement")),
+            Err(e) => Err(e),
         }
     }
 
@@ -174,9 +174,9 @@ impl Parser {
             return Ok(());
         } else {
             return Err(anyhow!(
-                "Expected token {:?} but got {:?} token",
+                "Expected {:?}  in line {:?} but found other expression",
                 expected_token,
-                tokens.get(0).unwrap().token_type
+                tokens.get(0).unwrap().line
             ));
         }
     }
@@ -185,7 +185,7 @@ impl Parser {
     pub fn parse(&mut self, mut tokens: Vec<Token>) -> Vec<StmtNode> {
         let mut statements = Vec::new();
 
-        while tokens.len() > 0 {
+        while tokens.get(0).unwrap().token_type != TokenType::Eof {
             let statement = self.statement(&mut tokens);
             statements.push(statement);
         }

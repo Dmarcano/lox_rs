@@ -21,6 +21,7 @@ pub enum StmtNode {
     PrintStmt(ExprNode),
     ExprStmt(ExprNode),
     ErrStmt(String),
+    VarStmt(String),
 }
 
 /// The operators supported by the Lox language.
@@ -130,6 +131,7 @@ pub trait StmtVisitor {
             StmtNode::PrintStmt(print_stmt) => self.visit_print_stmt(print_stmt),
             StmtNode::ExprStmt(expr) => self.visit_expr_stmt(expr),
             StmtNode::ErrStmt(err) => self.visit_err_stmt(err.clone()),
+            StmtNode::VarStmt(_) => todo!("Executing Variable Statements not yet implemented!"),
         }
     }
 

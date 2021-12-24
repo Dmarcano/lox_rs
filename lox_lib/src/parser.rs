@@ -154,8 +154,8 @@ impl Parser {
     }
 
     /// returns true or false if the token matches the token_type that is passed in
-    fn match_token(token_type: TokenType, tokens: &Token) -> bool {
-        return tokens.token_type == token_type;
+    fn match_token(token_type: TokenType, token: &Token) -> bool {
+        return token.token_type == token_type;
     }
 
     /// consumes a token from the tokens vector stream if it matches the TokenType that is expected passed in
@@ -190,10 +190,46 @@ impl Parser {
             statements.push(statement);
 
             if self.panic_mode {
-                panic!("Parsing error! Entered panic mode1 and there is no safe error recovery yet for parser");
+                self.synchronize(&mut tokens);
             }
         }
         statements
+    }
+
+    fn is_at_end(&self, tokens: &Vec<Token>) -> bool{ 
+        tokens.get(0).unwrap().token_type == TokenType::Eof
+    }
+
+    /// called after the parser enters panic mode from failing to parse a file. It will try to discard all
+    /// tokens related to the parser error until a semi-colon is found or another expression start is found
+    fn synchronize(&mut self, tokens: &mut Vec<Token>) {
+
+        while !self.is_at_end(tokens){
+            if Parser::match_token(
+                TokenType::Semicolon,
+                tokens
+                    .get(0)
+                    .expect("Expected there to be a token in token stream"),
+            ) {
+                tokens.remove(0);
+                self.panic_mode = false;
+                return;
+            }
+            self.panic_mode = false; 
+            match tokens.get(0).unwrap().token_type {
+                TokenType::Class => return,
+                TokenType::Fun => return,
+                TokenType::Var => return,
+                TokenType::For => return,
+                TokenType::If => return,
+                TokenType::While => return,
+                TokenType::Print => return,
+                TokenType::Return => return,
+                _ => {self.panic_mode = true;}
+            }
+            tokens.remove(0);
+        }
+        
     }
 
     // TODO this is whack. Needs more type safety to prevent the wrong token type from being passed in and silently
@@ -286,6 +322,11 @@ impl Parser {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn error_recovery_test() { 
+
+    }
 
     #[test]
     fn grouping_test() {

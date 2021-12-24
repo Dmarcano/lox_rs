@@ -1,4 +1,4 @@
-use crate::ast::{ExprNode, Literal, Operator, ExprVisitor, StmtNode, StmtVisitor};
+use crate::ast::{ExprNode, ExprVisitor, Literal, Operator, StmtNode, StmtVisitor};
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use anyhow::{anyhow, Context, Result};
@@ -118,8 +118,7 @@ impl Interpreter {
 }
 
 impl StmtVisitor for Interpreter {
-
-    fn visit_print_stmt(&mut self, node : &ExprNode) {
+    fn visit_print_stmt(&mut self, node: &ExprNode) {
         let literal = self.visit_expr_node(node);
         match literal {
             Ok(lit) => println!("{:#?}", lit),
@@ -127,15 +126,15 @@ impl StmtVisitor for Interpreter {
         }
     }
 
-    fn visit_expr_stmt(&mut self, node : &ExprNode) {
+    fn visit_expr_stmt(&mut self, node: &ExprNode) {
         let literal = self.visit_expr_node(node);
         match literal {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(err) => println!("{:#?}", err),
         }
     }
 
-    fn visit_err_stmt(&mut self, err : String) {
+    fn visit_err_stmt(&mut self, err: String) {
         println!("{}", err);
     }
 }

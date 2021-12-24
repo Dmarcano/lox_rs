@@ -125,19 +125,19 @@ pub enum ExprNode {
 }
 
 pub trait StmtVisitor {
-    fn visit_stmt(&mut self, node : &StmtNode) {
-        match node  {
-            StmtNode::PrintStmt(print_stmt) => {self.visit_print_stmt(print_stmt)}
-            StmtNode::ExprStmt(expr) => {self.visit_expr_stmt(expr)}
-            StmtNode::ErrStmt(err) => {self.visit_err_stmt(err.clone())}
+    fn visit_stmt(&mut self, node: &StmtNode) {
+        match node {
+            StmtNode::PrintStmt(print_stmt) => self.visit_print_stmt(print_stmt),
+            StmtNode::ExprStmt(expr) => self.visit_expr_stmt(expr),
+            StmtNode::ErrStmt(err) => self.visit_err_stmt(err.clone()),
         }
     }
 
-    fn visit_print_stmt(&mut self, node : &ExprNode);
+    fn visit_print_stmt(&mut self, node: &ExprNode);
 
-    fn visit_expr_stmt(&mut self, node : &ExprNode);
+    fn visit_expr_stmt(&mut self, node: &ExprNode);
 
-    fn visit_err_stmt(&mut self, err : String);
+    fn visit_err_stmt(&mut self, err: String);
 }
 
 /// The visitor is a trait for parsing and evaluating expressions in an Lox AST made up

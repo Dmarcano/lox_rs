@@ -188,6 +188,10 @@ impl Parser {
         while tokens.get(0).unwrap().token_type != TokenType::Eof {
             let statement = self.statement(&mut tokens);
             statements.push(statement);
+
+            if self.panic_mode {
+                panic!("Parsing error! Entered panic mode1 and there is no safe error recovery yet for parser");
+            }
         }
         statements
     }

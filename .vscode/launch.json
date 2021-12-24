@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["test_files/hello.lox"],
+            // "args": ["test_files/hello.lox"],
             "cwd": "${workspaceFolder}",
             "sourceLanguages": ["rust"]
         },
